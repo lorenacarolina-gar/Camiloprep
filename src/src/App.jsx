@@ -214,24 +214,69 @@ const CONNECTIVES_BANK = {
 };
 
 // ============================================================================
-// FUNÇÃO AUXILIAR PARA CHAMADA À API GEMINI COM EXPONENTIAL BACKOFF
+// ACESSO À IA PELA FUNÇÃO DO SUPABASE
 // ============================================================================
- async function callGeminiAPI(payload) {
+const AI_ACCESS_STORAGE_KEY = 'camiloprep-ai-password';
+let aiAccessPasswordInMemory = '';
+
+function readAiAccessPassword(storageName) {
+  try {
+    return window[storageName].getItem(AI_ACCESS_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function rememberAiAccessPassword(password) {
+  // A memória evita novas perguntas nesta página se o navegador bloquear o armazenamento.
+  aiAccessPasswordInMemory = password;
+  let savedPermanently = false;
+  try {
+    window.localStorage.setItem(AI_ACCESS_STORAGE_KEY, password);
+    savedPermanently = true;
+  } catch {
+    // Ainda podemos manter o acesso na sessão ou na memória desta página.
+  }
+  try {
+    if (savedPermanently) {
+      window.sessionStorage.removeItem(AI_ACCESS_STORAGE_KEY);
+    } else {
+      window.sessionStorage.setItem(AI_ACCESS_STORAGE_KEY, password);
+    }
+  } catch {
+    // O acesso em memória continua disponível para todas as ferramentas de IA.
+  }
+}
+
+function forgetRejectedAiAccessPassword(password) {
+  if (aiAccessPasswordInMemory === password) aiAccessPasswordInMemory = '';
+  for (const storageName of ['localStorage', 'sessionStorage']) {
+    try {
+      // Uma resposta antiga não deve apagar uma senha mais nova salva em outra aba.
+      if (window[storageName].getItem(AI_ACCESS_STORAGE_KEY) === password) {
+        window[storageName].removeItem(AI_ACCESS_STORAGE_KEY);
+      }
+    } catch {
+      // O armazenamento pode estar indisponível neste navegador.
+    }
+  }
+}
+
+async function callGeminiAPI(payload) {
   const functionUrl = "https://vejldzbaigkgdyxmelzj.supabase.co/functions/v1/camiloprep-ai";
   const supabasePublishableKey = "sb_publishable_iZ1QP705THl1tmKl_U9orQ_LXOyvfoi";
-  const passwordStorageKey = "camiloprep-ai-password";
-
-  let accessPassword = sessionStorage.getItem(passwordStorageKey);
+  let accessPassword = readAiAccessPassword('localStorage') ||
+    readAiAccessPassword('sessionStorage') || aiAccessPasswordInMemory;
 
   if (!accessPassword) {
-    accessPassword = window.prompt("Digite sua senha de acesso à IA:");
+    accessPassword = window.prompt("Digite sua senha de acesso à IA uma vez. Este navegador vai lembrar o acesso para os próximos usos:");
 
     if (!accessPassword) {
       throw new Error("A senha de acesso não foi informada.");
     }
-
-    sessionStorage.setItem(passwordStorageKey, accessPassword);
   }
+  // Também migra automaticamente a senha guardada pela versão anterior.
+  rememberAiAccessPassword(accessPassword);
 
   const response = await fetch(functionUrl, {
     method: "POST",
@@ -246,8 +291,8 @@ const CONNECTIVES_BANK = {
   const result = await response.json().catch(() => ({}));
 
   if (response.status === 403) {
-    sessionStorage.removeItem(passwordStorageKey);
-    throw new Error("Senha incorreta. Tente novamente.");
+    forgetRejectedAiAccessPassword(accessPassword);
+    throw new Error("A senha de acesso à IA foi recusada. Clique novamente e informe a senha atual.");
   }
 
   if (!response.ok) {
@@ -614,7 +659,7 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
 
     try {
       const systemInstruction = `Você é uma professora paciente de redação dissertativo-argumentativa. Ensine por perguntas, sem escrever a redação pela estudante. Não forneça uma tese pronta, parágrafos prontos ou frases para copiar. Avalie se o plano responde ao recorte da situação-problema e se os argumentos são distintos e explicáveis. Dê um elogio específico, uma pergunta orientadora, uma pista proporcional ao nível solicitado e uma próxima ação pequena. Seja gentil, direta e use português brasileiro.`;
-      const userPrompt = `Tema: ${selectedTheme.title}\nSituação-problema: ${selectedTheme.problemSituation}\n\nPlano da estudante:\nProblema entendido: ${plan.problem}\nTese: ${plan.thesis}\nArgumento 1: ${plan.argumentOne}\nArgumento 2: ${plan.argumentTwo}\n\nNível de ajuda solicitado: ${level} de 3. No nível 1, faça uma pergunta que a ajude a perceber um ponto por conta própria. No nível 2, seja mais explícita sobre o aspecto a revisar, mas não dê a resposta. No nível 3, explique o princípio e ofereça um exemplo curto sobre outro assunto, nunca uma resposta pronta para este tema.`;
+      const userPrompt = `Tema: ${selectedTheme.title}\nTexto-base: ${selectedTheme.baseText}\nSituação-problema: ${selectedTheme.problemSituation}\n\nPlano da estudante:\nProblema entendido: ${plan.problem}\nTese: ${plan.thesis}\nArgumento 1: ${plan.argumentOne}\nArgumento 2: ${plan.argumentTwo}\n\nNível de ajuda solicitado: ${level} de 3. No nível 1, faça uma pergunta que a ajude a perceber um ponto por conta própria. No nível 2, seja mais explícita sobre o aspecto a revisar, mas não dê a resposta. No nível 3, explique o princípio e ofereça um exemplo curto sobre outro assunto, nunca uma resposta pronta para este tema.`;
       const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
         systemInstruction: { parts: [{ text: systemInstruction }] },
@@ -682,51 +727,49 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-5 sm:p-7 text-white shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-800/60 px-3 py-1 text-xs font-bold text-emerald-100">
-              <GraduationCap className="h-4 w-4" /> Professora Virtual
-            </div>
-            <h2 className="mt-3 text-xl sm:text-2xl font-extrabold">Vamos planejar sua redação</h2>
-            <p className="mt-1 max-w-3xl text-sm text-emerald-100">Tema de hoje: {selectedTheme.title}</p>
-          </div>
-          <div className="flex w-full shrink-0 flex-col gap-3 md:w-80">
-            <button
-              type="button"
-              onClick={onStartMockExam}
-              disabled={isGeneratingTheme}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-extrabold text-emerald-950 transition hover:bg-amber-200 disabled:cursor-wait disabled:opacity-60"
-            >
+      <section className="cp-professor-hero" aria-labelledby="professor-heading">
+        <div className="cp-professor-intro">
+          <span className="cp-eyebrow"><GraduationCap size={17} /> PÁGINA 05 · PROFESSOR VIRTUAL</span>
+          <h1 id="professor-heading">Sua ideia tem<br /><span>muito potencial.</span></h1>
+          <p>Vamos transformar o que você pensa em uma redação com clareza, repertório e a sua voz.</p>
+          <div className="cp-teacher-sign"><span className="cp-teacher-avatar" aria-hidden="true"><PenTool size={21} /></span><span>Uma pista de cada vez.<br /><strong>A autoria é sempre sua.</strong></span></div>
+        </div>
+        <div className="cp-teacher-action-card">
+          <span className="cp-action-star" aria-hidden="true">✳</span>
+          <span className="cp-eyebrow">DO PLANEJAMENTO À PRÁTICA</span>
+          <h2>Vamos escrever<br />o próximo passo?</h2>
+          <div className="cp-professor-actions flex w-full flex-col gap-3">
+            <button type="button" onClick={onStartMockExam} disabled={isGeneratingTheme}
+              className="cp-button cp-button-dark">
               <Clock className="h-4 w-4" /> Começar simulado de 60 min
             </button>
-            <button
-              id="gerar-situacao-professor"
-              type="button"
-              onClick={onGenerateNewSituationProblem}
-              disabled={isGeneratingTheme}
-              aria-busy={isGeneratingTheme}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-sm transition hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:cursor-wait disabled:opacity-60"
-            >
+            <button id="gerar-situacao-professor" type="button" onClick={onGenerateNewSituationProblem}
+              disabled={isGeneratingTheme} aria-busy={isGeneratingTheme} className="cp-button cp-button-lime">
               <Sparkles aria-hidden="true" className={`h-5 w-5 shrink-0 ${isGeneratingTheme ? 'animate-pulse' : ''}`} />
               <span>{isGeneratingTheme ? 'Gerando situação-problema...' : 'Gerar situação-problema inédita com IA'}</span>
             </button>
           </div>
+          <p>A IA prepara o texto-base, a situação-problema e os repertórios com fonte da etapa 3. Tudo é atualizado junto para o novo tema.</p>
         </div>
-        <p className="mt-3 text-xs text-emerald-100/90">A IA cria uma proposta nova e troca o tema usado no planejamento. Ela tenta evitar os temas já vistos.</p>
-        {themeGenerationError && <p role="alert" className="mt-3 rounded-xl border border-rose-300/50 bg-rose-950/40 p-3 text-sm text-rose-100">{themeGenerationError}</p>}
-        <p className="mt-4 text-xs text-emerald-100/90">O planejamento fica salvo neste navegador. Só é enviado à IA quando você pede uma pista ou feedback.</p>
+        {themeGenerationError && <p role="alert" className="cp-teacher-error rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{themeGenerationError}</p>}
       </section>
+      <div className="cp-current-theme"><span className="cp-current-theme-icon" aria-hidden="true"><BookOpen size={21} /></span><p>Tema de hoje: {selectedTheme.title}</p><span className="cp-mini-label">LEIA · PLANEJE · ARGUMENTE</span></div>
+      <p className="cp-save-note">O planejamento fica salvo neste navegador. Só é enviado à IA quando você pede uma pista ou feedback.</p>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+        <section id="etapa-1-planejamento" aria-busy={isGeneratingTheme} className="cp-card rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
           <div>
             <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Etapa 1 • Planejamento</span>
             <h3 className="mt-1 text-lg font-extrabold text-slate-900">Monte suas ideias antes de escrever</h3>
             <p className="mt-1 text-sm text-slate-600">Responda com suas palavras. Não precisa ficar perfeito na primeira tentativa.</p>
           </div>
 
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-950">
+          <div id="professor-texto-base" role="region" aria-labelledby="titulo-texto-base-professor" className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm text-slate-800">
+            <h4 id="titulo-texto-base-professor" className="font-bold">Texto-base</h4>
+            <p className="mt-2 whitespace-pre-line leading-relaxed">{selectedTheme.baseText}</p>
+          </div>
+
+          <div id="professor-situacao-problema" className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-950">
             <strong>Situação-problema:</strong> {selectedTheme.problemSituation}
           </div>
 
@@ -798,7 +841,7 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
         </section>
 
         <div className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+          <section className="cp-card rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-amber-100 p-2 text-amber-800"><Zap className="h-5 w-5" /></div>
               <div>
@@ -835,7 +878,7 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
             )}
           </section>
 
-          <section id="etapa-3-fontes" aria-labelledby="titulo-repertorio" aria-busy={isGeneratingTheme} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+          <section id="etapa-3-fontes" aria-labelledby="titulo-repertorio" aria-busy={isGeneratingTheme} className="cp-card rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
             <div>
               <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Etapa 3 • Repertório com fonte</span>
               <h3 id="titulo-repertorio" className="mt-1 text-lg font-extrabold text-slate-900">Leia antes de usar um dado</h3>
@@ -843,8 +886,9 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
             </div>
             {isGeneratingTheme && <p role="status" className="sr-only">Preparando a nova proposta e suas leituras. A seleção abaixo ainda pertence ao tema atual.</p>}
             <div className="space-y-3">
-              {studySources.map(({ source, connection }) => (
-                <article key={source.id} data-source-id={source.id} className="rounded-xl border border-slate-200 p-3.5">
+              {studySources.map(({ source, connection, purpose }) => (
+                <article key={source.id} data-source-id={source.id} className="cp-source-card rounded-xl border border-slate-200 p-3.5">
+                  <span className="cp-source-purpose">{SOURCE_PURPOSES[purpose]}</span>
                   <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">{source.institution} • {source.date}</div>
                   <a href={source.url} target="_blank" rel="noopener noreferrer" title={`Fonte do catálogo conferido em ${SOURCE_CATALOG_CHECKED_AT}. ${source.caution}`} className="mt-1 inline-flex items-start gap-1 text-sm font-bold text-slate-900 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-800">
                     {source.title}<ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -858,6 +902,51 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
         </div>
       </div>
     </div>
+  );
+}
+
+
+// Componentes exclusivamente visuais. Os recursos de estudo mantêm o mesmo estado.
+function StudyIllustration() {
+  return (
+    <div className="cp-study-art" aria-hidden="true">
+      <div className="cp-art-orbit" />
+      <span className="cp-art-spark cp-spark-one">✳</span><span className="cp-art-spark cp-spark-two">✦</span>
+      <div className="cp-art-paper">
+        <span className="cp-paper-tag">PROJETO DE TEXTO</span>
+        <span className="cp-paper-title">Grandes ideias.<br />Suas palavras.</span>
+        <span className="cp-paper-line" /><span className="cp-paper-line cp-paper-line-short" />
+        <span className="cp-paper-highlight">tese + argumento + autoria</span>
+        <span className="cp-paper-line" /><span className="cp-paper-line" /><span className="cp-paper-line cp-paper-line-short" />
+        <span className="cp-paper-check"><Check size={16} /> um passo de cada vez</span>
+      </div>
+      <div className="cp-art-pencil"><span /><i /></div>
+      <span className="cp-art-sticker"><Sparkles size={18} /><span>Sua voz<br /><strong>faz a diferença.</strong></span></span>
+      <svg className="cp-art-arrow" viewBox="0 0 130 76"><path d="M5 10C100-20 122 45 56 59m0 0 16-17M56 59l25 9" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    </div>
+  );
+}
+
+function WorkspaceHero({ page, progress, completed, total, isMockExam }) {
+  const content = {
+    simulador: { tag: 'PÁGINA 01 · SIMULADOR DE REDAÇÃO', title: <>Seu futuro.<br />Suas ideias.<br /><span>Sua escrita.</span></>, description: 'Um espaço para treinar, descobrir sua voz e chegar mais confiante à redação da São Camilo.' },
+    plano: { tag: 'PÁGINA 02 · PLANO DE ESTUDOS', title: <>Um passo por dia.<br /><span>Uma escrita melhor.</span></>, description: 'De 19 a 22/10: quatro dias de prática, com espaço para descansar. Acompanhe suas metas e veja sua evolução.' },
+    parafrase: { tag: 'PÁGINA 03 · LABORATÓRIO', title: <>Boas ideias.<br /><span>Com a sua voz.</span></>, description: 'Aprenda a transformar uma referência em argumento autoral. Experimente, receba feedback e conecte suas ideias.' },
+    'folha-ouro': { tag: 'PÁGINA 04 · FOLHA DE OURO', title: <>Leve o essencial.<br /><span>Confie no treino.</span></>, description: 'Seu repertório de bolso para a revisão de cinco minutos no dia 26/10. Respire: uma ideia de cada vez.' }
+  }[page];
+  if (isMockExam) return <section className="cp-focus-banner"><span className="cp-eyebrow"><Clock size={16} /> MODO SIMULADO</span><h1>Agora é você e a sua escrita.</h1><p>Leia a proposta, organize suas ideias e acompanhe o tempo abaixo.</p></section>;
+  return (
+    <section className={`cp-workspace-hero ${page === 'simulador' ? 'cp-home-hero' : 'cp-compact-hero'}`} aria-labelledby="workspace-title">
+      <div className="cp-hero-copy">
+        <span className="cp-eyebrow"><span className="cp-small-star">✳</span> {content.tag}</span>
+        <h1 id="workspace-title">{content.title}</h1>
+        <p>{content.description}</p>
+        {page === 'simulador' && <div className="cp-hero-facts"><span><Clock size={15} /><strong>60 min</strong> para praticar</span><span><FileText size={15} /><strong>250–450</strong> palavras</span></div>}
+      </div>
+      {page === 'simulador' ? <StudyIllustration /> : page === 'plano' ? (
+        <div className="cp-plan-progress"><span className="cp-eyebrow">SEU CAMINHO ATÉ A PROVA</span><strong>{progress}<small>%</small></strong><div role="progressbar" aria-label="Metas concluídas" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} className="cp-progress-track"><span style={{width: `${progress}%`}} /></div><span>{completed} de {total} metas concluídas</span></div>
+      ) : <div className="cp-section-seal" aria-hidden="true">{page === 'parafrase' ? <PenTool size={57} strokeWidth={1.5} /> : <Award size={62} strokeWidth={1.5} />}<span>{page === 'parafrase' ? 'AUTORIA SE TREINA' : 'SEU REPERTÓRIO VALE OURO'}</span><span className="cp-seal-star">✦</span></div>}
+    </section>
   );
 }
 
@@ -1174,8 +1263,8 @@ Não repita os títulos nem o recorte das propostas recentes abaixo; escolha um 
 ${recentThemeTitles || '- Nenhum tema anterior'}
 A proposta deve conter:
 1. category e um title claro.
-2. baseText contextualizado, entre 110 e 150 palavras. Use apenas fatos e conceitos dos resumos fornecidos. Pode descrever uma situação hipotética, identificada como tal. Não invente estatísticas, pesquisas, citações ou notícias. Preserve ano, território e público de qualquer dado. Não apresente uma pesquisa antiga como atual.
-3. problemSituation: um comando claro para produzir um texto dissertativo-argumentativo entre 250 e 450 palavras, sem dar a resposta pronta.
+2. baseText: um texto-base completo e contextualizado, entre 110 e 150 palavras, que apresente o problema antes do comando. Use apenas fatos e conceitos dos resumos das três fontes que selecionar em studySources. Pode descrever uma situação hipotética, identificada como tal. Não invente estatísticas, pesquisas, citações ou notícias. Preserve ano, território e público de qualquer dado. Não apresente uma pesquisa antiga como atual. O texto-base deve ajudar a compreender o contexto; não deve repetir o comando nem ser uma redação pronta.
+3. problemSituation: um comando claro para produzir um texto dissertativo-argumentativo entre 250 e 450 palavras, sem dar a resposta pronta. O comando deve se referir ao texto-base gerado nesta mesma resposta e tratar do mesmo recorte.
 4. studySources: EXATAMENTE três leituras diferentes, pertinentes ao recorte específico que você criou. Defina o recorte de forma que haja suporte em três materiais do catálogo. Use pelo menos dois publishers diferentes.
 Cada leitura contém somente sourceId, purpose, connection, howToUse e readingQuestion.
 - Use um sourceId existente no catálogo; não crie links, títulos, autores ou metadados. A aplicação acrescentará o link original e o resumo conferido.
@@ -1438,94 +1527,53 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
   const progressPercent = Math.round((completedTasksCount / totalTasksCount) * 100);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-16">
-      {/* CABEÇALHO SUPERIOR */}
-      <header className="bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 text-white shadow-lg border-b border-emerald-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0 shadow-inner">
-              <HeartPulse className="w-7 h-7 text-emerald-300" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                  Edital nº 084/2026 • Redação Agendada
-                </span>
-                <span className="text-xs font-medium text-emerald-200 bg-emerald-800/60 px-2.5 py-0.5 rounded-full">
-                  Meta: Farmácia São Camilo • Prova Dia 26/10
-                </span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mt-1">
-                CamiloPrep <span className="font-normal text-emerald-300">| Simulador Oficial de Redação Digitada</span>
-              </h1>
-            </div>
+    <div className="cp-app" data-page={activeTab}>
+      <style>{CAMILOPREP_DESIGN_CSS}</style>
+      <a className="cp-skip" href="#conteudo-estudo">Pular para o conteúdo</a>
+      <header className="cp-header">
+        <div className="cp-topbar">
+          <div className="cp-brand" aria-label="CamiloPrep">
+            <span className="cp-brand-symbol" aria-hidden="true"><PenTool size={24} strokeWidth={2.5} /></span>
+            <span>camilo<span className="cp-brand-bottom">prep<span className="cp-brand-dot">.</span></span></span>
           </div>
-
-          {/* Mini Status da Contagem Regressiva & Regras */}
-          <div className="flex flex-wrap items-center gap-3 bg-emerald-950/60 border border-emerald-800/80 rounded-xl px-4 py-2.5 text-xs">
-            <div className="flex items-center gap-2 pr-3 border-r border-emerald-800">
-              <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
-              <div>
-                <div className="text-emerald-300 font-medium">Janela de Treino</div>
-                <div className="font-bold text-white">19, 20, 21 e 22/10 (4 Dias)</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 pr-3 border-r border-emerald-800">
-              <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div>
-                <div className="text-emerald-300 font-medium">Regra Oficial</div>
-                <div className="font-bold text-white">250 a 450 palavras (Digitada)</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400 shrink-0" />
-              <div>
-                <div className="text-emerald-300 font-medium">Zona de Ouro</div>
-                <div className="font-bold text-amber-300">320 a 400 palavras</div>
-              </div>
-            </div>
-          </div>
+          <nav className="cp-navigation" aria-label="Páginas de estudo">
+            {[
+              { id: 'simulador', number: '01', short: 'Simulador', label: '1. Simulador Oficial (Prova Digitada)', icon: PenTool },
+              { id: 'plano', number: '02', short: 'Meu plano', label: `2. Plano 4 Dias (19 a 22/10) • ${progressPercent}%`, icon: ListChecks },
+              { id: 'parafrase', number: '03', short: 'Laboratório', label: '3. Laboratório Anti-Plágio & Conectivos', icon: Layers },
+              { id: 'folha-ouro', number: '04', short: 'Folha de ouro', label: '4. Folha de Ouro (Revisão 5 min Dia 26)', icon: Sparkles },
+              { id: 'professor', number: '05', short: 'Professor virtual', label: '5. Professor Virtual', icon: GraduationCap }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
+                  disabled={isMockExam && tab.id !== 'simulador'}
+                  aria-label={tab.label} aria-current={activeTab === tab.id ? 'page' : undefined}
+                  aria-controls="conteudo-estudo" className={`cp-nav-item ${activeTab === tab.id ? 'is-active' : ''}`}>
+                  <span className="cp-nav-number" aria-hidden="true">{tab.number}</span>
+                  <Icon size={16} aria-hidden="true" /><span>{tab.short}</span>
+                  {tab.id === 'plano' && <span className="cp-nav-progress" aria-hidden="true">{progressPercent}%</span>}
+                </button>
+              );
+            })}
+          </nav>
         </div>
-
-        {/* BARRA DE NAVEGAÇÃO POR ABAS */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 flex overflow-x-auto no-scrollbar gap-1.5 border-t border-emerald-800/40">
-          {[
-            { id: 'simulador', label: '1. Simulador Oficial (Prova Digitada)', icon: PenTool },
-            { id: 'plano', label: `2. Plano 4 Dias (19 a 22/10) • ${progressPercent}%`, icon: ListChecks },
-            { id: 'parafrase', label: '3. Laboratório Anti-Plágio & Conectivos', icon: Layers },
-            { id: 'folha-ouro', label: '4. Folha de Ouro (Revisão 5 min Dia 26)', icon: Sparkles },
-            { id: 'professor', label: '5. Professor Virtual', icon: GraduationCap }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                disabled={isMockExam && tab.id !== 'simulador'}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-t-xl transition-all whitespace-nowrap border-b-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                  active
-                    ? 'bg-slate-50 text-emerald-950 border-amber-400 shadow-sm'
-                    : 'text-emerald-100/80 border-transparent hover:bg-emerald-800/40 hover:text-white'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${active ? 'text-emerald-700' : 'text-emerald-300'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
+        <div className="cp-context-line">
+          <span><span className="cp-status-dot" /> Seu espaço de preparação para a São Camilo</span>
+          <span><Calendar size={13} /> Farmácia · Prova em 26/10</span>
         </div>
       </header>
 
-      {/* CONTEÚDO PRINCIPAL */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+      <main id="conteudo-estudo" tabIndex={-1} className="cp-main">
+        {activeTab !== 'professor' && <WorkspaceHero page={activeTab} progress={progressPercent}
+          completed={completedTasksCount} total={totalTasksCount} isMockExam={isMockExam} />}
         {/* =====================================================================
             ABA 1: SIMULADOR OFICIAL DE PROVA DIGITADA SÃO CAMILO
            ===================================================================== */}
         {activeTab === 'simulador' && (
           <div className="space-y-6">
             {/* BARRA DE CONTROLE DE TEMPO E SELETOR DE TEMA */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+            <div className="cp-card cp-control-panel bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
               <div className="flex flex-col gap-4">
                 {/* Seletor de Proposta */}
                 <div className="w-full space-y-1.5">
@@ -1535,6 +1583,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                   </label>
                   <div className="flex flex-col md:flex-row gap-2">
                     <select
+                      id="seletor-tema" aria-label="Escolha a proposta de redação"
                       value={selectedThemeId}
                       onChange={(e) => setSelectedThemeId(e.target.value)}
                       disabled={isMockExam}
@@ -1550,7 +1599,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                     <button
                       onClick={() => handleGenerateCustomTheme()}
                       disabled={isGeneratingTheme || isMockExam}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs border border-emerald-200 transition shrink-0"
+                      className="cp-generate-theme inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs border border-emerald-200 transition shrink-0"
                     >
                       <RefreshCw className={`w-4 h-4 text-emerald-700 ${isGeneratingTheme ? 'animate-spin' : ''}`} />
                       {isGeneratingTheme ? 'Criando Proposta...' : '+ Gerar Tema Inédito IA'}
@@ -1560,7 +1609,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Cronômetro Oficial de 60 Minutos */}
-               <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end">
+               <div className="cp-timer flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end">
                   <Clock className={`w-6 h-6 ${timerRunning ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`} />
                   <div>
                     <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
@@ -1627,8 +1676,8 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
               {/* COLUNA ESQUERDA (5 cols): TEXTO-BASE, SITUAÇÃO-PROBLEMA & MONITOR DE PARÁGRAFOS */}
               <div className="lg:col-span-5 space-y-5">
                 {/* Card da Proposta Oficial */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-emerald-900 text-white px-5 py-3.5 flex items-center justify-between">
+                <div className="cp-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="cp-proposal-heading bg-emerald-900 text-white px-5 py-3.5 flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-200">
                       {selectedTheme.category}
                     </span>
@@ -1759,7 +1808,8 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
 
               {/* COLUNA DIREITA (7 cols): TERMINAL DE DIGITAÇÃO OFICIAL SÃO CAMILO */}
               <div className="lg:col-span-7 space-y-5">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div className="cp-card cp-editor-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                  <div className="cp-editor-title"><span><PenTool size={19} /> Seu espaço de escrita</span><span className="cp-mini-label">UMA IDEIA POR VEZ</span></div>
                   {/* Barra de Status de Palavras (250 a 450 palavras) */}
                   <div className={`${isMockExam && timerRunning ? 'hidden' : ''} p-4 sm:p-5 bg-slate-50 border-b border-slate-200 space-y-3`}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1878,6 +1928,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                   <div className="p-4 sm:p-5 space-y-3">
                     <input
                       type="text"
+                      id="titulo-redacao" aria-label="Título da redação (opcional)"
                       value={essayTitle}
                       onChange={(e) => setEssayTitle(e.target.value)}
                       placeholder="Título da Redação (Opcional na São Camilo — não deixe linha em branco se não usar)"
@@ -1885,6 +1936,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                     />
 
                     <textarea
+                      id="texto-redacao" aria-label="Sua redação"
                       value={essayText}
                       onChange={(e) => setEssayText(e.target.value)}
                       rows={16}
@@ -1892,7 +1944,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       placeholder={isMockExam
                         ? 'Digite sua redação. Ela permanece no editor enquanto esta página estiver aberta.'
                         : `Digite sua redação aqui (Exatamente como no computador da São Camilo no dia 26/10)...\n\n• Parágrafo 1 (Introdução ~80 palavras): Repertório + Situação-Problema + Tese com 2 argumentos.\n• Parágrafo 2 (Desenvolvimento 1 ~100 palavras): Tópico frasal + Paráfrase de dado/fato + Crítica.\n• Parágrafo 3 (Desenvolvimento 2 ~100 palavras): "Ademais..." + Consequência ética/social.\n• Parágrafo 4 (Conclusão ~80 palavras): "Depreende-se, portanto..." + Síntese reflexiva retomando o repertório.\n\n(Dica: O corretor ortográfico automático do navegador está desativado neste campo para treinar sua atenção real de prova!)`}
-                      className="w-full p-4 rounded-xl border border-slate-300 bg-white text-slate-900 text-base leading-relaxed font-serif focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
+                      className="cp-essay-input w-full p-4 rounded-xl border border-slate-300 bg-white text-slate-900 text-base leading-relaxed font-serif focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
                     />
 
                     {/* Alerta de Repetição de Palavras */}
@@ -1921,7 +1973,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       <button
                         onClick={handleEvaluateEssay}
                         disabled={isEvaluating || (isMockExam && timerRunning)}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-extrabold text-sm shadow-md hover:shadow-lg transition disabled:opacity-60 shrink-0"
+                        className="cp-correct-button inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-extrabold text-sm shadow-md hover:shadow-lg transition disabled:opacity-60 shrink-0"
                       >
                         {isEvaluating ? (
                           <>
@@ -1943,7 +1995,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                     RELATÓRIO DE CORREÇÃO DA BANCA SÃO CAMILO (0 A 100 PONTOS)
                    ================================================================= */}
                 {evaluationResult && (
-                  <div className="bg-white rounded-2xl shadow-md border-2 border-emerald-600/30 overflow-hidden space-y-5 p-5 sm:p-6">
+                  <div className="cp-card bg-white rounded-2xl shadow-md border-2 border-emerald-600/30 overflow-hidden space-y-5 p-5 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                       <div>
                         <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
@@ -2078,7 +2130,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
         {activeTab === 'plano' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-4">
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="cp-card bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-900">
                     Seu Cronograma Realista até o Dia 26/10 (Farmácia São Camilo)
@@ -2098,7 +2150,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
               {STUDY_PLAN_DAYS.map((day) => (
                 <div
                   key={day.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3"
+                  className="cp-card bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -2145,7 +2197,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
 
             {/* Coluna Lateral: Histórico de Simulados */}
             <div className="lg:col-span-4 space-y-4">
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+              <div className="cp-card bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-2">
                   <Award className="w-4 h-4 text-emerald-600" />
                   Seu Histórico de Evolução (Meta: 4 Redações)
@@ -2201,7 +2253,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
         {activeTab === 'parafrase' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Treinador de Paráfrase com IA */}
-            <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="cp-card cp-lab-writing lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
                   Blindagem contra o Item 5.1.2.9 do Edital
@@ -2219,6 +2271,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                   1. Frase do Texto-Base (Original):
                 </label>
                 <textarea
+                  aria-label="Frase original do texto-base"
                   value={paraphraseInput}
                   onChange={(e) => setParaphraseInput(e.target.value)}
                   rows={3}
@@ -2231,6 +2284,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                   2. Sua Paráfrase (Reescreva com suas palavras + verbo crítico):
                 </label>
                 <textarea
+                  aria-label="Sua paráfrase"
                   value={studentParaphrase}
                   onChange={(e) => setStudentParaphrase(e.target.value)}
                   rows={3}
@@ -2287,7 +2341,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
             </div>
 
             {/* Banco de Conectivos por Parágrafo */}
-            <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="cp-card cp-connectives lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
               <h3 className="text-base font-extrabold text-slate-900">
                 Mapa de Conectivos de Alto Impacto (Banca São Camilo)
               </h3>
@@ -2328,7 +2382,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
            ===================================================================== */}
         {activeTab === 'folha-ouro' && (
           <div className="space-y-6">
-            <div className="bg-gradient-to-r from-amber-50 via-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-300 shadow-sm">
+            <div className="cp-gold-intro bg-gradient-to-r from-amber-50 via-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-300 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-400/30 text-amber-950 border border-amber-400">
@@ -2347,7 +2401,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
             {/* Os 4 Repertórios Coringas Prontos para Usar */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {WILDCARD_REPERTORIES.map((rep, i) => (
-                <div key={i} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2.5">
+                <div key={i} className="cp-card bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
                       {rep.axis}
@@ -2366,7 +2420,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
             </div>
 
             {/* Checklist de Bolso para os 60 Minutos no Laboratório de Informática da São Camilo */}
-            <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-4">
+            <div className="cp-exam-protocol bg-slate-900 text-white rounded-2xl p-6 space-y-4">
               <h3 className="text-base sm:text-lg font-extrabold text-amber-300 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 Protocolo Exato dos 60 Minutos no Computador da São Camilo (Dia 26/10)
@@ -2405,6 +2459,314 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
           </div>
         )}
       </main>
+      <footer className="cp-footer"><span className="cp-footer-brand">camilo<strong>prep.</strong></span><span>Clareza para pensar. Confiança para escrever.</span><span>Seu treino para a São Camilo <ArrowRight size={15} /></span></footer>
     </div>
   );
 }
+
+
+// Tema visual autocontido: basta substituir este App.jsx no projeto existente.
+const CAMILOPREP_DESIGN_CSS = `
+.cp-app {
+  --cp-ink: #22251f; --cp-muted: #64665d; --cp-paper: #fffef9;
+  --cp-canvas: #f5f2eb; --cp-peach: #eacbae; --cp-pink: #bd3079;
+  --cp-lime: #d9f963; --cp-line: #dedfd3;
+  min-height:100vh; background:var(--cp-canvas); color:var(--cp-ink);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased; padding:18px 0 0; overflow-wrap:break-word;
+}
+.cp-app *, .cp-app *::before, .cp-app *::after { box-sizing:border-box; }
+.cp-app button, .cp-app input, .cp-app select, .cp-app textarea { font-family:inherit; }
+.cp-app button { cursor:pointer; transition:background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.cp-app button:disabled { cursor:not-allowed; opacity:.55; }
+.cp-app button:focus-visible, .cp-app a:focus-visible, .cp-app input:focus-visible, .cp-app textarea:focus-visible, .cp-app select:focus-visible { outline:3px solid #9d2665; outline-offset:4px; }
+.cp-app button:not(.cp-nav-item) { border-radius:999px; }
+.cp-app input[type="checkbox"] { accent-color:#526730; }
+.cp-app ::selection { background:#e6efa9; color:#20231f; }
+.cp-app h1, .cp-app h2, .cp-app h3, .cp-app h4 { text-wrap:balance; }
+.cp-app h2, .cp-app h3 { letter-spacing:-.035em; }
+.cp-skip { position:absolute; top:8px; left:16px; z-index:100; transform:translateY(-180%); background:var(--cp-ink); color:white; padding:12px 20px; border-radius:12px; }
+.cp-skip:focus { transform:translateY(0); }
+.cp-header, .cp-main, .cp-footer { width:min(1280px,calc(100% - 64px)); margin-inline:auto; }
+.cp-topbar { display:flex; align-items:center; justify-content:space-between; gap:32px; padding:20px 24px; background:#fffef9; border:1px solid #e4dfd5; border-radius:20px; box-shadow:0 3px 12px #27291b06; }
+.cp-brand { display:flex; gap:11px; align-items:center; font-size:26px; font-weight:850; line-height:.8; letter-spacing:-1.4px; flex-shrink:0; }
+.cp-brand-bottom { display:block; }
+.cp-brand-dot { color:var(--cp-pink); }
+.cp-brand-symbol { width:44px; height:44px; display:grid; place-items:center; border-radius:50%; background:var(--cp-lime); transform:rotate(-13deg); }
+.cp-navigation { display:flex; align-items:center; gap:5px; min-width:0; }
+.cp-nav-item { display:flex; align-items:center; justify-content:center; gap:7px; min-height:48px; border-radius:999px; padding:10px 13px; background:transparent; font-size:12px; font-weight:650; white-space:nowrap; color:#55584d; }
+.cp-nav-number { font-size:10px; font-weight:800; color:#838778; }
+.cp-nav-item > svg { display:none; }
+.cp-nav-item:hover { background:#efefe6; }
+.cp-nav-item.is-active { background:#23261f; color:#fffef9; }
+.cp-nav-item.is-active .cp-nav-number { color:var(--cp-lime); }
+.cp-nav-progress { font-size:10px; padding:2px 5px; background:#e9eecf; color:#455329; border-radius:6px; }
+.cp-nav-item.is-active .cp-nav-progress { background:var(--cp-lime); color:#23261f; }
+.cp-context-line { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; padding:13px 6px 19px; font-size:11px; font-weight:550; color:#66685d; }
+.cp-context-line > span { display:flex; align-items:center; gap:7px; }
+.cp-status-dot { width:6px; height:6px; border-radius:50%; background:#6a7e43; }
+.cp-main { outline:none; }
+.cp-workspace-hero { position:relative; display:grid; align-items:center; gap:32px; margin-bottom:28px; border-radius:30px; padding:42px 48px; background:var(--cp-peach); }
+.cp-home-hero { grid-template-columns:1.05fr 1fr; min-height:432px; }
+.cp-eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:10px; font-weight:800; letter-spacing:.12em; line-height:1.5; }
+.cp-small-star { font-size:20px; color:var(--cp-pink); line-height:1; }
+.cp-hero-copy h1 { margin:17px 0 20px; font-family:Arial,Helvetica,sans-serif; font-weight:900; font-size:clamp(48px,6.1vw,80px); line-height:.96; letter-spacing:-.065em; }
+.cp-hero-copy h1 > span { color:var(--cp-pink); }
+.cp-hero-copy > p { max-width:420px; font-size:14px; line-height:1.65; color:#4c4b3f; }
+.cp-hero-facts { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:25px; }
+.cp-hero-facts > span { display:flex; align-items:center; gap:6px; font-size:11px; color:#4e4a3e; }
+.cp-hero-facts strong { color:#24261f; }
+.cp-study-art { position:relative; isolation:isolate; min-height:348px; width:100%; max-width:500px; justify-self:center; pointer-events:none; }
+.cp-art-orbit { position:absolute; width:300px; height:300px; border-radius:50%; left:14%; top:32px; background:var(--cp-lime); }
+.cp-art-paper { position:absolute; left:18%; top:14px; width:245px; min-height:292px; padding:26px 22px 20px; display:flex; flex-direction:column; gap:12px; background:var(--cp-paper); border:1px solid #e0d5c5; border-radius:4px 17px 17px 4px; transform:rotate(-8deg); box-shadow:9px 15px 0 #3b452215,0 16px 24px #6a4f3521; }
+.cp-art-paper::before { content:''; position:absolute; top:0; bottom:0; left:12px; width:1px; background:#e7a7ad; opacity:.6; }
+.cp-paper-tag { font-size:7px; font-weight:800; letter-spacing:.15em; color:#7a7d6f; }
+.cp-paper-title { font-family:Arial,sans-serif; font-size:26px; line-height:1; font-weight:900; letter-spacing:-.05em; margin-bottom:4px; }
+.cp-paper-line { height:2px; width:100%; background:#deded1; }
+.cp-paper-line-short { width:67%; }
+.cp-paper-highlight { font-size:9px; background:#e7f6af; align-self:flex-start; padding:4px 6px; transform:rotate(-1deg); font-weight:650; }
+.cp-paper-check { display:flex; align-items:center; gap:4px; margin-top:3px; font-size:8px; font-weight:650; color:#5c7140; }
+.cp-art-pencil { position:absolute; left:72%; top:78px; width:22px; height:215px; border:2px solid #292b25; background:#db75ac; border-radius:6px 6px 0 0; transform:rotate(23deg); box-shadow:6px 5px 0 #28261c12; }
+.cp-art-pencil::before { content:''; display:block; position:absolute; bottom:-27px; left:-2px; width:22px; height:28px; background:#24261f; clip-path:polygon(0 0,100% 0,50% 100%); }
+.cp-art-pencil::after { content:''; display:block; position:absolute; bottom:-20px; left:1px; width:16px; height:20px; background:#eccc9a; clip-path:polygon(0 0,100% 0,50% 100%); }
+.cp-art-pencil > span { position:absolute; inset:25px 6px 0 auto; width:2px; background:#ae437f; }
+.cp-art-pencil > i { position:absolute; top:14px; height:12px; width:100%; background:#f5e5ed; border-block:2px solid #292b25; }
+.cp-art-sticker { position:absolute; display:flex; align-items:center; gap:9px; left:2%; bottom:6px; padding:14px 18px; font-size:12px; line-height:1.35; color:#593952; background:#ecd6ee; border:1px solid #ccafc7; border-radius:14px; box-shadow:4px 5px 0 #885b7712; transform:rotate(6deg); }
+.cp-art-sticker strong { font-weight:800; }
+.cp-art-spark { position:absolute; color:var(--cp-pink); }
+.cp-spark-one { top:0; right:6%; font-size:73px; line-height:1; transform:rotate(8deg); }
+.cp-spark-two { left:0; top:80px; font-size:37px; color:#272b24; }
+.cp-art-arrow { position:absolute; width:105px; height:70px; right:0; bottom:0; color:#414e27; transform:rotate(17deg); }
+.cp-compact-hero { grid-template-columns:1fr 275px; min-height:240px; padding-block:32px; }
+.cp-compact-hero h1 { font-size:clamp(34px,4.2vw,55px); line-height:1; margin-block:13px; }
+.cp-compact-hero .cp-hero-copy > p { max-width:600px; }
+.cp-app[data-page="plano"] .cp-compact-hero { background:#e1e9ce; }
+.cp-app[data-page="plano"] .cp-hero-copy h1 > span { color:#546b32; }
+.cp-app[data-page="parafrase"] .cp-compact-hero { background:#eddfeb; }
+.cp-app[data-page="folha-ouro"] .cp-compact-hero { background:#efdda4; }
+.cp-app[data-page="folha-ouro"] .cp-hero-copy h1 > span { color:#84611f; }
+.cp-plan-progress { background:#fffef9b3; padding:22px 25px; border-radius:21px; display:flex; flex-direction:column; gap:9px; }
+.cp-plan-progress > strong { font-size:64px; line-height:1; font-weight:850; letter-spacing:-.07em; }
+.cp-plan-progress small { font-size:30px; }
+.cp-plan-progress > span:last-child { font-size:11px; color:#626854; }
+.cp-progress-track { height:6px; background:#d7decb; border-radius:6px; overflow:hidden; }
+.cp-progress-track > span { display:block; height:100%; background:#667e38; border-radius:6px; transition:width .2s ease; }
+.cp-section-seal { position:relative; width:164px; height:164px; margin:auto; border-radius:50%; background:#fffef9ad; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; transform:rotate(8deg); color:#524047; }
+.cp-section-seal > span:not(.cp-seal-star) { font-size:8px; font-weight:800; letter-spacing:.08em; }
+.cp-section-seal .cp-seal-star { position:absolute; top:-20px; right:0; font-size:47px; color:#a6447a; }
+.cp-focus-banner { padding:24px 28px; background:#e4ebd4; border-radius:24px; margin-bottom:24px; }
+.cp-focus-banner h1 { font-size:25px; font-weight:800; letter-spacing:-.04em; margin:6px 0; }
+.cp-focus-banner p { font-size:13px; color:#59614d; }
+.cp-app .cp-card { border-radius:23px; background:var(--cp-paper); border-color:var(--cp-line); box-shadow:0 2px 0 #252b1603; }
+.cp-app .cp-card h2 { font-size:20px; line-height:1.35; }
+.cp-app .cp-card h3 { line-height:1.4; }
+.cp-main > div, .cp-main section, .cp-main .grid > div { min-width:0; }
+.cp-app .bg-slate-50 { background-color:#f5f5ee; }
+.cp-app .bg-slate-100 { background-color:#ebede3; }
+.cp-app .bg-slate-200 { background-color:#e0e4d6; }
+.cp-app .bg-slate-900 { background-color:#272c23; }
+.cp-app .bg-slate-800 { background-color:#3a4033; }
+.cp-app .border-slate-200 { border-color:#dfe2d5; }
+.cp-app .border-slate-300 { border-color:#cfd5c4; }
+.cp-app .text-slate-900 { color:#252a21; }
+.cp-app .text-slate-800 { color:#343b2d; }
+.cp-app .text-slate-700 { color:#46503e; }
+.cp-app .text-slate-600 { color:#5d6656; }
+.cp-app .text-slate-500 { color:#68705e; }
+.cp-app .text-emerald-700 { color:#526832; }
+.cp-app .text-emerald-800 { color:#45592d; }
+.cp-app .text-emerald-900 { color:#374829; }
+.cp-app .text-emerald-950 { color:#2c3b24; }
+.cp-app .bg-emerald-50 { background-color:#edf3e1; }
+.cp-app .bg-emerald-100 { background-color:#e0edcd; }
+.cp-app .border-emerald-200 { border-color:#d1dfba; }
+.cp-app .border-emerald-300 { border-color:#bacb9d; }
+.cp-app .cp-main button.bg-emerald-700 { background:#2e3724; color:#fffef9; min-height:44px; }
+.cp-app .cp-main button.bg-emerald-700:hover { background:#475b30; }
+.cp-app .cp-main button.bg-slate-900 { min-height:44px; }
+.cp-app .cp-main button.text-xs { min-height:36px; }
+.cp-app .cp-control-panel { padding:22px 24px; }
+.cp-control-panel > div:first-child { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:22px; }
+.cp-control-panel > div:first-child > div:first-child > div { flex-direction:column; align-items:flex-start; }
+.cp-control-panel select { width:100%; min-width:0; max-width:100%; text-overflow:ellipsis; min-height:44px; background:#f8f7ef; font-size:13px; }
+.cp-control-panel .cp-generate-theme { border:0; background:transparent; padding:3px 0; color:#526832; font-weight:750; min-height:32px; font-size:11px; }
+.cp-control-panel .cp-generate-theme:hover { color:#a52b6b; background:transparent; text-decoration:underline; text-underline-offset:4px; }
+.cp-app .cp-timer { border:0; border-radius:18px; margin:0; padding:15px 17px; gap:12px; min-height:103px; align-self:start; }
+.cp-timer > svg { color:var(--cp-lime); width:21px; }
+.cp-timer .text-slate-400 { color:#bec8ae; }
+.cp-timer .text-2xl { font-size:27px; }
+.cp-timer button.bg-emerald-500 { background:var(--cp-lime); }
+.cp-timer button.bg-emerald-500:hover { background:#cdeb62; }
+.cp-control-panel > div:last-child:not(:first-child) { font-size:10px; gap:10px; flex-wrap:wrap; border:0; background:#f0f4e5; color:#506133; margin-top:14px; }
+.cp-app .cp-proposal-heading { background:#e6edda; color:#3b4b28; gap:12px; align-items:flex-start; }
+.cp-proposal-heading > span { color:#45562e; }
+.cp-proposal-heading > span:last-child { background:#f6f8ec; color:#5d6a4a; font-size:10px; white-space:nowrap; }
+.cp-app .text-justify { text-align:left; }
+.cp-app p.leading-relaxed { line-height:1.8; }
+.cp-editor-title { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:19px 22px; border-bottom:1px solid #e0e4d6; }
+.cp-editor-title > span:first-child { display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; letter-spacing:-.035em; }
+.cp-mini-label { font-size:8px; letter-spacing:.1em; font-weight:750; color:#60694e; }
+.cp-app .cp-essay-input { border-color:#e1e4d6; border-radius:16px; line-height:1.9; font-family:Georgia,"Times New Roman",serif; min-height:410px; padding:20px; background-color:#fffffd; }
+.cp-app .cp-essay-input::placeholder { font-size:14px; color:#888e7e; line-height:1.85; }
+.cp-app .cp-correct-button { background:var(--cp-lime); color:#28301d; box-shadow:none; border:1px solid #c9df72; font-size:12px; padding-inline:20px; }
+.cp-app .cp-correct-button svg { color:#52612d; }
+.cp-app .cp-correct-button:hover { background:#cce853; box-shadow:0 3px 0 #69754123; }
+.cp-editor-card .pt-2.flex { flex-wrap:wrap; }
+.cp-editor-card .pt-2.flex > div { flex:1 1 160px; }
+.cp-professor-hero { display:grid; grid-template-columns:1.1fr 1fr; gap:30px; padding:40px 42px; background:#eddbe7; border-radius:30px; }
+.cp-professor-intro h1 { font-family:Arial,Helvetica,sans-serif; font-size:clamp(36px,4.6vw,62px); line-height:1.01; letter-spacing:-.065em; font-weight:900; margin:21px 0 18px; }
+.cp-professor-intro h1 > span { color:#a92e6d; }
+.cp-professor-intro > p { max-width:360px; color:#685060; font-size:14px; line-height:1.7; }
+.cp-teacher-sign { display:flex; align-items:center; gap:12px; margin-top:24px; font-size:11px; color:#6a5261; line-height:1.5; }
+.cp-teacher-avatar { display:grid; place-items:center; width:45px; height:45px; background:#f8f2ed; border:1px solid #dbc6d3; border-radius:50%; color:#a02f69; transform:rotate(-10deg); }
+.cp-teacher-action-card { position:relative; background:#fffef9; border:1px solid #e2cfda; border-radius:22px; padding:27px 28px; align-self:center; }
+.cp-teacher-action-card > h2 { font-size:24px; line-height:1.1; font-weight:800; margin:10px 0 20px; letter-spacing:-.045em; }
+.cp-action-star { position:absolute; right:25px; top:20px; font-size:51px; line-height:1; color:#bd6397; transform:rotate(12deg); pointer-events:none; }
+.cp-teacher-action-card > .cp-eyebrow { font-size:8px; max-width:calc(100% - 50px); color:#777464; }
+.cp-professor-actions { display:flex; flex-direction:column; }
+.cp-app .cp-button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:13px 17px; font-size:12px; font-weight:750; line-height:1.4; border:1px solid transparent; }
+.cp-app .cp-button-dark { background:#272c23; color:#fffef9; }
+.cp-app .cp-button-dark:hover { background:#404c32; }
+.cp-app .cp-button-lime { background:var(--cp-lime); border-color:#cbe37b; color:#303b22; }
+.cp-app .cp-button-lime:hover { background:#cce853; }
+.cp-teacher-action-card > p { font-size:10px; color:#646553; line-height:1.6; margin-top:12px; }
+.cp-teacher-error { grid-column:1/-1; }
+.cp-current-theme { display:flex; align-items:center; gap:15px; border-block:1px solid #dcdfd2; padding:19px 4px; }
+.cp-current-theme-icon { width:39px; height:39px; border-radius:12px; display:grid; place-items:center; flex-shrink:0; background:#e6edda; color:#5a6d3d; }
+.cp-current-theme p { font-weight:650; font-size:14px; line-height:1.6; flex:1; }
+.cp-current-theme .cp-mini-label { width:90px; text-align:right; line-height:1.8; flex-shrink:0; }
+.cp-save-note { font-size:11px; color:#626b55; margin-top:12px !important; }
+.cp-app #etapa-1-planejamento, .cp-app #etapa-3-fontes { padding:26px; }
+.cp-app #professor-texto-base { background:#f6f6ed; border-color:#e4e5d7; border-radius:16px; padding:20px; }
+.cp-app #professor-texto-base h4 { font-size:12px; letter-spacing:.03em; }
+.cp-app #professor-texto-base p { font-size:14px; }
+.cp-app #professor-situacao-problema { background:#f4ebcc; border-color:#e6dba8; color:#625327; padding:18px; line-height:1.8; border-radius:16px; }
+.cp-app .cp-source-card { background:#f7f7ef; border:1px solid #e3e6d7; border-radius:16px; padding:17px; }
+.cp-source-purpose { display:inline-flex; border-radius:999px; font-size:9px; font-weight:750; padding:4px 8px; margin-bottom:10px; background:#e3eccf; color:#536b32; }
+.cp-source-card:nth-child(2) .cp-source-purpose { background:#f3e4c0; color:#7b612c; }
+.cp-source-card:nth-child(3) .cp-source-purpose { background:#ebdfeb; color:#7d4c74; }
+.cp-source-card a { line-height:1.55; text-decoration-color:#b6c295; text-underline-offset:4px; }
+.cp-source-card p { line-height:1.7; margin-top:8px; }
+.cp-app .cp-gold-intro { background:#f7f0d9; border-color:#e3d7ac; box-shadow:none; border-radius:23px; }
+.cp-app .cp-exam-protocol { background:#2b3025; border-radius:24px; }
+.cp-exam-protocol > h3 { color:#e5edb6; }
+.cp-exam-protocol .grid > div { background:#363e2d; border-color:#505b41; border-radius:16px; }
+.cp-exam-protocol .text-emerald-400 { color:#cce58c; }
+.cp-exam-protocol .text-slate-300 { color:#c6cebb; }
+.cp-footer { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-top:48px; padding:24px 4px 30px; border-top:1px solid #daddcf; color:#626757; font-size:10px; }
+.cp-footer-brand { font-size:21px; font-weight:500; letter-spacing:-1.3px; color:#484d3e; }
+.cp-footer-brand strong { font-weight:850; }
+.cp-footer > span:last-child { display:flex; align-items:center; gap:8px; }
+@media (min-width:1100px) {
+  .cp-professor-hero + .cp-current-theme ~ .grid { grid-template-columns:1.07fr 1fr; }
+}
+@media (max-width:1150px) {
+  .cp-header,.cp-main,.cp-footer { width:calc(100% - 40px); }
+  .cp-topbar { gap:14px; padding:18px; }
+  .cp-nav-item { padding:10px; gap:5px; font-size:11px; }
+  .cp-nav-progress { display:none; }
+  .cp-home-hero { padding:32px; min-height:405px; }
+  .cp-study-art { transform:scale(.88); transform-origin:center; }
+  .cp-home-hero .cp-hero-copy h1 { font-size:68px; }
+  .cp-control-panel > div:first-child { gap:16px; }
+  .cp-app .cp-timer { padding:12px; }
+  .cp-professor-hero { padding:32px; gap:24px; }
+}
+@media (max-width:900px) {
+  .cp-topbar { flex-direction:column; align-items:stretch; gap:15px; padding:18px; }
+  .cp-brand { align-self:center; font-size:24px; }
+  .cp-brand-symbol { width:40px; height:40px; }
+  .cp-navigation { justify-content:space-between; }
+  .cp-nav-item { flex:1; min-width:0; }
+  .cp-context-line { padding-bottom:15px; }
+  .cp-home-hero { grid-template-columns:1fr .85fr; gap:0; }
+  .cp-home-hero .cp-hero-copy h1 { font-size:58px; }
+  .cp-study-art { transform:scale(.78); width:380px; justify-self:center; }
+  .cp-home-hero { overflow:hidden; }
+  .cp-hero-copy { position:relative; z-index:2; min-width:0; }
+  .cp-hero-copy > p { font-size:13px; }
+  .cp-compact-hero { grid-template-columns:1fr 210px; padding:28px; }
+  .cp-plan-progress { padding:20px; }
+  .cp-professor-hero { grid-template-columns:1fr 1fr; gap:22px; padding:28px; }
+  .cp-professor-intro h1 { font-size:41px; }
+  .cp-teacher-action-card { padding:22px 20px; }
+  .cp-app .cp-button { font-size:11px; padding-inline:12px; }
+}
+@media (max-width:680px) {
+  .cp-app { padding-top:12px; }
+  .cp-header,.cp-main,.cp-footer { width:calc(100% - 28px); }
+  .cp-topbar { gap:15px; border-radius:19px; padding:17px 12px 12px; }
+  .cp-brand { flex-direction:row; font-size:24px; line-height:1; gap:9px; }
+  .cp-brand-bottom { display:inline; }
+  .cp-brand-symbol { width:34px; height:34px; }
+  .cp-brand-symbol > svg { width:19px; }
+  .cp-navigation { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  .cp-nav-item { border-radius:12px; padding:9px 5px; min-height:43px; gap:5px; font-size:10px; background:#f2f3e9; }
+  .cp-nav-item:nth-child(5) { grid-column:2/4; }
+  .cp-nav-number { font-size:8px; }
+  .cp-nav-item:nth-child(5) > svg { display:block; }
+  .cp-context-line { font-size:9px; padding:12px 2px 15px; gap:5px; }
+  .cp-context-line > span:last-child { display:none; }
+  .cp-workspace-hero { padding:28px 24px; border-radius:23px; margin-bottom:20px; }
+  .cp-home-hero { grid-template-columns:minmax(0,1fr); gap:9px; min-height:0; }
+  .cp-eyebrow { font-size:8px; letter-spacing:.1em; }
+  .cp-small-star { font-size:16px; }
+  .cp-home-hero .cp-hero-copy h1 { font-size:clamp(49px,13vw,72px); margin:18px 0; }
+  .cp-hero-copy > p { max-width:400px; font-size:13px; }
+  .cp-hero-facts { margin-top:19px; gap:10px 17px; }
+  .cp-hero-facts > span { font-size:10px; }
+  .cp-study-art { display:none; }
+  .cp-compact-hero { grid-template-columns:1fr; gap:22px; }
+  .cp-compact-hero h1 { font-size:38px; margin:15px 0; }
+  .cp-plan-progress { width:100%; gap:8px; }
+  .cp-plan-progress > strong { font-size:48px; }
+  .cp-section-seal { display:none; }
+  .cp-app .cp-control-panel { padding:18px; }
+  .cp-control-panel > div:first-child { grid-template-columns:1fr; gap:15px; }
+  .cp-control-panel > div:first-child > div:first-child > label { font-size:9px; }
+  .cp-control-panel select { font-size:12px; }
+  .cp-control-panel .cp-generate-theme { min-height:40px; }
+  .cp-app .cp-timer { width:100%; min-height:0; padding:14px 16px; justify-content:space-between; }
+  .cp-app .cp-timer > svg { display:none; }
+  .cp-control-panel > div:last-child:not(:first-child) { line-height:1.7; }
+  .cp-app .cp-card { border-radius:20px; }
+  .cp-app .cp-card h2 { font-size:18px; }
+  .cp-proposal-heading { flex-direction:column; gap:8px; }
+  .cp-proposal-heading > span:first-child { font-size:10px; line-height:1.6; }
+  .cp-editor-title { padding:17px; }
+  .cp-editor-title > span:first-child { font-size:15px; }
+  .cp-editor-title .cp-mini-label { display:none; }
+  .cp-app .cp-essay-input { min-height:400px; padding:16px; }
+  .cp-main input:not([type="checkbox"]), .cp-main textarea, .cp-main select { font-size:16px; }
+  .cp-main input::placeholder, .cp-main textarea::placeholder { font-size:13px; }
+  .cp-app .cp-correct-button { width:100%; min-height:48px; }
+  .cp-professor-hero { grid-template-columns:1fr; padding:28px 22px; border-radius:23px; gap:24px; }
+  .cp-professor-intro h1 { font-size:clamp(37px,10.3vw,55px); margin:18px 0; }
+  .cp-professor-intro > p { font-size:13px; }
+  .cp-teacher-sign { margin-top:18px; }
+  .cp-teacher-action-card { padding:24px 19px; border-radius:18px; }
+  .cp-app .cp-button { font-size:12px; min-height:49px; padding-inline:14px; }
+  .cp-action-star { font-size:42px; right:20px; }
+  .cp-current-theme { align-items:flex-start; gap:11px; padding:16px 0; }
+  .cp-current-theme p { font-size:12px; }
+  .cp-current-theme .cp-mini-label { display:none; }
+  .cp-save-note { line-height:1.7; font-size:10px; }
+  .cp-app #etapa-1-planejamento, .cp-app #etapa-3-fontes { padding:20px; }
+  .cp-app #professor-texto-base { padding:16px; }
+  .cp-app #professor-texto-base p { font-size:14px; }
+  .cp-app #professor-situacao-problema { padding:16px; font-size:13px; }
+  .cp-app .cp-source-card { padding:16px; }
+  .cp-footer { flex-wrap:wrap; gap:13px; margin-top:32px; padding-top:22px; }
+  .cp-footer > span:last-child { width:100%; font-size:9px; }
+  .cp-footer > span:nth-child(2) { max-width:180px; font-size:9px; text-align:right; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cp-app *, .cp-app *::before, .cp-app *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+@media print {
+  .cp-app { background:white; }
+  .cp-header, .cp-footer, .cp-workspace-hero, .cp-professor-actions { display:none; }
+  .cp-main { width:100%; }
+  .cp-app .cp-card { box-shadow:none; break-inside:avoid; }
+}
+`;
