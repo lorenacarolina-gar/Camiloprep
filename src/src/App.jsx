@@ -1528,7 +1528,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
 
   return (
     <div className="cp-app" data-page={activeTab}>
-      <style>{CAMILOPREP_DESIGN_CSS}</style>
+      <style>{CAMILOPREP_DESIGN_CSS}{CAMILOPREP_PASTEL_CSS}</style>
       <a className="cp-skip" href="#conteudo-estudo">Pular para o conteúdo</a>
       <header className="cp-header">
         <div className="cp-topbar">
@@ -1609,13 +1609,13 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Cronômetro Oficial de 60 Minutos */}
-               <div className="cp-timer flex flex-wrap items-center justify-between gap-3  bg-rose-100 text-rose-800 px-4 py-3 rounded-2xl border boborder-rose-300 w-full sm:w-fit self-start sm:self-end">
-                  <Clock className={`w-6 h-6 ${timerRunning ? 'text-rose-800 animate-pulse' : 'text-rose-400'}`} />
+               <div className="cp-timer flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end">
+                  <Clock className={`w-6 h-6 ${timerRunning ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`} />
                   <div>
-                    <div className="text-[11px] uppercase tracking-wider text-rose-800 font-semibold">
+                    <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
                       {isMockExam ? (timerRunning ? 'Simulado em andamento' : 'Tempo encerrado') : 'Tempo Oficial (60 min)'}
                     </div>
-                    <div className="text-2xl font-mono font-extrabold tracking-rose text-white">
+                    <div className="text-2xl font-mono font-extrabold tracking-wider text-white">
                       {formatTime(secondsLeft)}
                     </div>
                   </div>
@@ -1624,8 +1624,8 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       onClick={() => setTimerRunning((prev) => !prev)}
                       className={`p-2.5 rounded-xl font-bold text-xs flex items-center gap-1 transition ${
                         timerRunning
-                          ? 'bg-rose-500 hover:bg-rose-600 text-white-950'
-                          : 'bg-rose-500 hover:bg-lime-200 text-white-950'
+                          ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                          : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950'
                       }`}
                       title={timerRunning ? 'Pausar Cronômetro' : 'Iniciar Cronômetro de 60 min'}
                     >
@@ -1637,7 +1637,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                         setTimerRunning(false);
                         setSecondsLeft(3600);
                       }}
-                      className="p-2.5 rounded-xl bg-rose-800 hover:bg-rose-700 text-white-300 transition"
+                      className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
                       title="Reiniciar 60 minutos"
                     >
                       <RotateCcw className="w-4 h-4" />
@@ -1647,7 +1647,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
               </div>
 
               {isMockExam && (
-                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-rose-300 bg-lime-50 px-3.5 py-3 text-sm text-white-950">
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-amber-950">
                   <span className="font-semibold">
                     {secondsLeft > 0
                       ? 'Modo simulado ativo: dicas e conectivos rápidos estão ocultos.'
@@ -1655,7 +1655,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                   </span>
                   <button
                     onClick={handleEndMockExam}
-                    className="shrink-0 rounded-lg border border-rose-400 bg-white px-3 py-2 text-xs font-bold text-white-950 hover:bg-lime-200"
+                    className="shrink-0 rounded-lg border border-amber-400 bg-white px-3 py-2 text-xs font-bold text-amber-950 hover:bg-amber-100"
                   >
                     Encerrar simulado
                   </button>
@@ -1676,35 +1676,35 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
               {/* COLUNA ESQUERDA (5 cols): TEXTO-BASE, SITUAÇÃO-PROBLEMA & MONITOR DE PARÁGRAFOS */}
               <div className="lg:col-span-5 space-y-5">
                 {/* Card da Proposta Oficial */}
-                <div className="cp-card bg-white rounded-2xl shadow-sm border border-rose-200 overflow-hidden">
-                  <div className="cp-proposal-heading bg-rose-900 text-white px-5 py-3.5 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-pink-200">
+                <div className="cp-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="cp-proposal-heading bg-emerald-900 text-white px-5 py-3.5 flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-200">
                       {selectedTheme.category}
                     </span>
-                    <span className="text-xs bg-rose-800 px-2.5 py-0.5 rounded-full font-semibold">
+                    <span className="text-xs bg-emerald-800 px-2.5 py-0.5 rounded-full font-semibold">
                       {selectedTheme.daySuggestion}
                     </span>
                   </div>
                   <div className="p-5 space-y-4">
-                    <h2 className="text-lg font-extrabold text-rose-900 leading-snug">
+                    <h2 className="text-lg font-extrabold text-slate-900 leading-snug">
                       {selectedTheme.title}
                     </h2>
 
-                    <div className="bg-lime-50 border border-pink-100 rounded-xl p-4 space-y-2">
-                      <div className="text-xs font-bold uppercase tracking-wider text-rose-500">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
                         Texto-Base (Leia e Parafraseie — Não copie trechos!)
                       </div>
-                      <p className="text-sm text-rose-700 leading-relaxed text-justify">
+                      <p className="text-sm text-slate-700 leading-relaxed text-justify">
                         {selectedTheme.baseText}
                       </p>
                     </div>
 
-                    <div className="bg-lime-50/90 border border-rose-300 rounded-xl p-4 space-y-1.5">
-                      <div className="text-xs font-extrabold uppercase tracking-wider text-white-900 flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <div className="bg-amber-50/90 border border-amber-300 rounded-xl p-4 space-y-1.5">
+                      <div className="text-xs font-extrabold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                         Comando da Situação-Problema:
                       </div>
-                      <p className="text-sm font-medium text-white-950 leading-relaxed">
+                      <p className="text-sm font-medium text-amber-950 leading-relaxed">
                         {selectedTheme.problemSituation}
                       </p>
                     </div>
@@ -1712,19 +1712,19 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Card Monitor de Equilíbrio dos 4 Parágrafos */}
-                <div className={`${isMockExam && timerRunning ? 'hidden' : ''} bg-white rounded-2xl shadow-sm border border-rose-200 p-5 space-y-4`}>
+                <div className={`${isMockExam && timerRunning ? 'hidden' : ''} bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4`}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-extrabold text-white-800 uppercase tracking-wider flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-rose-600" />
+                    <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
                       Termômetro de Equilíbrio por Parágrafo
                     </h3>
-                    <span className="text-xs font-semibold text-rose-500">
+                    <span className="text-xs font-semibold text-slate-500">
                       {textMetrics.paragraphCount}/4 parágrafos
                     </span>
                   </div>
 
                   {textMetrics.paragraphCounts.length === 0 ? (
-                    <p className="text-xs text-rose-500 bg-lime-50 p-3.5 rounded-xl border border-dashed border-rose-200">
+                    <p className="text-xs text-slate-500 bg-slate-50 p-3.5 rounded-xl border border-dashed border-slate-200">
                       Comece a digitar sua redação ao lado. Pule uma linha (Enter) para separar cada um dos 4 parágrafos e ver o equilíbrio em tempo real.
                     </p>
                   ) : (
@@ -2485,7 +2485,7 @@ const CAMILOPREP_DESIGN_CSS = `
 .cp-app ::selection { background:#e6efa9; color:#20231f; }
 .cp-app h1, .cp-app h2, .cp-app h3, .cp-app h4 { text-wrap:balance; }
 .cp-app h2, .cp-app h3 { letter-spacing:-.035em; }
-.cp-skip { position:absolute; top:8px; left:16px; z-index:100; transform:translateY(-180%); background:var(--cp-ink); color:white; padding:12px 20px; border-radius:12px; }
+.cp-skip { position:absolute; top:8px; left:16px; z-index:100; transform:translateY(-180%); background:#eee6f7; color:#393541; padding:12px 20px; border-radius:12px; border:1px solid #d9cce9; }
 .cp-skip:focus { transform:translateY(0); }
 .cp-header, .cp-main, .cp-footer { width:min(1280px,calc(100% - 64px)); margin-inline:auto; }
 .cp-topbar { display:flex; align-items:center; justify-content:space-between; gap:32px; padding:20px 24px; background:#fffef9; border:1px solid #e4dfd5; border-radius:20px; box-shadow:0 3px 12px #27291b06; }
@@ -2768,5 +2768,180 @@ const CAMILOPREP_DESIGN_CSS = `
   .cp-header, .cp-footer, .cp-workspace-hero, .cp-professor-actions { display:none; }
   .cp-main { width:100%; }
   .cp-app .cp-card { box-shadow:none; break-inside:avoid; }
+}
+`;
+
+// Camada de cores pastel aplicada a todo o aplicativo. Tons das letras ficam
+// mais profundos que os fundos para que continuem legíveis.
+const CAMILOPREP_PASTEL_CSS = `
+.cp-app {
+  --cp-ink:#393541; --cp-muted:#625e6d; --cp-paper:#fffdfd;
+  --cp-canvas:#fbf8fc; --cp-peach:#fae5d9; --cp-pink:#f6e0eb;
+  --cp-lime:#e8f1ce; --cp-line:#e7e1eb;
+}
+.cp-app .cp-nav-item { color:#625d69; }
+.cp-app .cp-nav-item .cp-nav-number { color:#737080; }
+.cp-app .cp-nav-item:hover { background:#f2ebf5; }
+.cp-app .cp-nav-item.is-active { background:#f2deeb; color:#543b52; box-shadow:inset 0 0 0 1px #e8cede; }
+.cp-app .cp-nav-item.is-active .cp-nav-number { color:#754968; }
+.cp-app .cp-nav-item.is-active .cp-nav-progress { background:#e4efce; color:#42543b; }
+.cp-app .cp-home-hero { background:#fae5d9; }
+.cp-app .cp-hero-copy h1 > span { color:#873f64; }
+.cp-app .cp-small-star, .cp-app .cp-art-spark { color:#8c3f60; }
+.cp-app .cp-art-orbit { background:#e8f1ce; }
+.cp-app .cp-art-pencil { background:#edc4d8; border-color:#867487; box-shadow:6px 5px 0 #745b7012; }
+.cp-app .cp-art-pencil::before { background:#d8ccdf; }
+.cp-app .cp-art-pencil > i { border-color:#867487; }
+.cp-app .cp-art-pencil > span { background:#a96d89; }
+.cp-app .cp-art-paper { box-shadow:9px 15px 0 #594e6310,0 16px 24px #6a4f3512; }
+.cp-app .cp-art-sticker { background:#eee5f7; border-color:#ded0ed; color:#574668; }
+.cp-app .cp-art-arrow { color:#65794e; }
+.cp-app[data-page="plano"] .cp-compact-hero { background:#e5f1df; }
+.cp-app[data-page="plano"] .cp-hero-copy h1 > span { color:#426047; }
+.cp-app[data-page="parafrase"] .cp-compact-hero { background:#eee6f7; }
+.cp-app[data-page="parafrase"] .cp-hero-copy h1 > span { color:#5b4c71; }
+.cp-app[data-page="folha-ouro"] .cp-compact-hero { background:#fbf0d2; }
+.cp-app[data-page="folha-ouro"] .cp-hero-copy h1 > span { color:#735523; }
+.cp-app .cp-plan-progress { background:#fffdfdbd; }
+.cp-app .cp-progress-track { background:#e0e8d9; }
+.cp-app .cp-progress-track > span { background:#88a36f; }
+.cp-app .cp-section-seal { background:#fffdfdc9; color:#59465d; }
+.cp-app .cp-section-seal .cp-seal-star { color:#805071; }
+.cp-app .cp-focus-banner { background:#e5eff9; }
+.cp-app .cp-focus-banner p { color:#4e6277; }
+
+/* Superfícies de todos os componentes, inclusive os fundos utilitários antigos. */
+.cp-app .bg-white { background-color:#fffdfd; }
+.cp-app .bg-slate-50, .cp-app [class~="bg-slate-50/60"], .cp-app [class~="bg-slate-50/80"] { background-color:#f8f5fb; }
+.cp-app .bg-slate-100, .cp-app [class~="bg-slate-100/80"] { background-color:#f0eaf7; }
+.cp-app .bg-slate-200 { background-color:#e5def0; }
+.cp-app .bg-slate-300 { background-color:#d9d1e7; }
+.cp-app .bg-slate-400 { background-color:#cbc3d9; }
+.cp-app .bg-slate-500, .cp-app .bg-slate-600, .cp-app .bg-slate-700 { background-color:#eae4f1; }
+.cp-app .bg-slate-800, .cp-app [class~="bg-slate-800/90"] { background-color:#e3edf8; }
+.cp-app .bg-slate-900, .cp-app .bg-slate-950 { background-color:#e9e3f1; }
+
+.cp-app .bg-emerald-50, .cp-app [class~="bg-emerald-50/60"], .cp-app [class~="bg-emerald-50/70"], .cp-app [class~="bg-emerald-50/80"] { background-color:#eaf3e5; }
+.cp-app .bg-emerald-100 { background-color:#e0edd8; }
+.cp-app .bg-emerald-200, .cp-app [class~="bg-emerald-200/60"] { background-color:#d6e7cd; }
+.cp-app .bg-emerald-300, .cp-app .bg-emerald-400, .cp-app .bg-emerald-500, .cp-app .bg-emerald-600 { background-color:#e0edd8; }
+.cp-app .bg-emerald-700, .cp-app .bg-emerald-800, .cp-app .bg-emerald-900, .cp-app .bg-emerald-950 { background-color:#e4efde; }
+
+.cp-app .bg-teal-50, .cp-app .bg-teal-100 { background-color:#e3f2ef; }
+.cp-app .bg-teal-800, .cp-app .bg-teal-900, .cp-app .bg-teal-950 { background-color:#e1efed; }
+.cp-app .bg-sky-50, .cp-app .bg-sky-100 { background-color:#e5f1fa; }
+.cp-app .bg-sky-200, .cp-app .bg-sky-300 { background-color:#d7e8f6; }
+.cp-app .bg-sky-800, .cp-app .bg-sky-900 { background-color:#e5f1fa; }
+.cp-app .bg-amber-50, .cp-app [class~="bg-amber-50/70"], .cp-app [class~="bg-amber-50/90"] { background-color:#fff2dd; }
+.cp-app .bg-amber-100, .cp-app .bg-amber-200, .cp-app [class~="bg-amber-200/70"] { background-color:#ffebc8; }
+.cp-app .bg-amber-300, .cp-app .bg-amber-400, .cp-app [class~="bg-amber-400/30"], .cp-app .bg-amber-500 { background-color:#ffedc9; }
+.cp-app .bg-amber-600, .cp-app .bg-amber-700, .cp-app .bg-amber-800, .cp-app .bg-amber-900 { background-color:#fff2dd; }
+.cp-app .bg-rose-50, .cp-app .bg-rose-100 { background-color:#fbe8ee; }
+.cp-app .bg-rose-200, .cp-app [class~="bg-rose-200/80"], .cp-app .bg-rose-300, .cp-app .bg-rose-400, .cp-app .bg-rose-500, .cp-app .bg-rose-600 { background-color:#f5dce7; }
+.cp-app .bg-rose-800, .cp-app .bg-rose-900 { background-color:#fbe8ee; }
+.cp-app .bg-purple-50, .cp-app .bg-purple-100, .cp-app .bg-violet-50, .cp-app .bg-violet-100 { background-color:#eee6f7; }
+.cp-app .bg-blue-50, .cp-app .bg-blue-100 { background-color:#e5f0fa; }
+
+/* Texto escuro com matiz suave; os cinzas continuam legíveis. */
+.cp-app .text-white { color:#393541; }
+.cp-app .text-slate-950, .cp-app .text-slate-900 { color:#393541; }
+.cp-app .text-slate-800 { color:#45414e; }
+.cp-app .text-slate-700 { color:#504c5b; }
+.cp-app .text-slate-600 { color:#5d5969; }
+.cp-app .text-slate-500 { color:#625e6d; }
+.cp-app .text-slate-400 { color:#686476; }
+.cp-app .text-emerald-950, .cp-app .text-emerald-900 { color:#385344; }
+.cp-app .text-emerald-800, .cp-app .text-emerald-700 { color:#426047; }
+.cp-app .text-emerald-600, .cp-app .text-emerald-500, .cp-app .text-emerald-400, .cp-app .text-emerald-300 { color:#506c54; }
+.cp-app .text-teal-950, .cp-app .text-teal-900, .cp-app .text-teal-800, .cp-app .text-teal-700 { color:#3e615d; }
+.cp-app .text-sky-950, .cp-app .text-sky-900, .cp-app .text-sky-800, .cp-app .text-sky-700 { color:#365c79; }
+.cp-app .text-amber-950, .cp-app .text-amber-900, .cp-app .text-amber-800, .cp-app .text-amber-700 { color:#735523; }
+.cp-app .text-amber-600, .cp-app .text-amber-500, .cp-app .text-amber-400, .cp-app .text-amber-300 { color:#785c2c; }
+.cp-app .text-rose-950, .cp-app .text-rose-900, .cp-app .text-rose-800, .cp-app .text-rose-700 { color:#873f58; }
+.cp-app .text-rose-600, .cp-app .text-rose-500 { color:#934761; }
+.cp-app .text-purple-950, .cp-app .text-purple-900, .cp-app .text-violet-900 { color:#5b4c71; }
+.cp-app .text-blue-900, .cp-app .text-blue-800, .cp-app .text-blue-700 { color:#3d5b78; }
+
+/* Bordas e realces seguem a cor suave de cada bloco. */
+.cp-app .border-slate-100, .cp-app .border-slate-200, .cp-app .border-slate-300 { border-color:#e3deea; }
+.cp-app .border-slate-400, .cp-app .border-slate-500, .cp-app .border-slate-600, .cp-app .border-slate-700, .cp-app .border-slate-800 { border-color:#d9d1e4; }
+.cp-app .border-emerald-100, .cp-app .border-emerald-200, .cp-app .border-emerald-300, .cp-app .border-emerald-400 { border-color:#d1e3c8; }
+.cp-app .border-sky-100, .cp-app .border-sky-200, .cp-app .border-sky-300 { border-color:#cddff0; }
+.cp-app .border-amber-100, .cp-app .border-amber-200, .cp-app .border-amber-300, .cp-app .border-amber-400 { border-color:#eedcb7; }
+.cp-app .border-rose-100, .cp-app .border-rose-200, .cp-app .border-rose-300, .cp-app .border-rose-400 { border-color:#eccbd8; }
+
+/* Controles e botões: preenchimentos claros, com texto e foco nítidos. */
+.cp-app .cp-nav-item.is-active { background:#f2deeb; color:#543b52; }
+.cp-app .cp-timer { background:#e4edf7; color:#393541; border:1px solid #d2deeb; }
+.cp-app .cp-timer .text-slate-400 { color:#625e6d; }
+.cp-app .cp-timer > svg { color:#55718e; }
+.cp-app .cp-timer button.bg-emerald-500, .cp-app .cp-timer button.bg-amber-500 { background:#d6e7f5; color:#3d526b; }
+.cp-app .cp-timer button.bg-amber-500 { background:#ffebc8; color:#735523; }
+.cp-app .cp-timer button.bg-emerald-500:hover { background:#c5dbed; }
+.cp-app .cp-timer button.bg-amber-500:hover { background:#f8dfad; }
+.cp-app .cp-main button.bg-emerald-700 { background:#dcebd3; color:#3c5941; border:1px solid #c9ddbd; }
+.cp-app .cp-main button.bg-emerald-700:hover { background:#d0e3c4; }
+.cp-app .cp-main button.bg-slate-900 { background:#ebe3f4; color:#514462; border:1px solid #dcd0e9; }
+.cp-app .cp-main button.bg-slate-900:hover { background:#e1d6ef; }
+.cp-app .cp-button-dark { background:#e0ebf6; color:#3c536d; border-color:#cdddec; }
+.cp-app .cp-button-dark:hover { background:#d3e2f1; }
+.cp-app .cp-button-lime { background:#eaf1d7; color:#40563a; border-color:#d7e5bd; }
+.cp-app .cp-button-lime:hover { background:#dfecc8; }
+.cp-app .cp-correct-button { background:#e5f0dc; color:#3e5941; border-color:#ccdfc1; }
+.cp-app .cp-correct-button:hover { background:#d9eacb; }
+.cp-app [class~="focus:ring-emerald-600"]:focus, .cp-app [class~="focus:ring-emerald-500"]:focus { --tw-ring-color:#90709c; }
+.cp-app button:focus-visible, .cp-app a:focus-visible, .cp-app input:focus-visible, .cp-app textarea:focus-visible, .cp-app select:focus-visible { outline-color:#806488; }
+.cp-app .cp-proposal-heading { background:#e5f0df; color:#3c5841; }
+.cp-app .cp-proposal-heading > span, .cp-app .cp-proposal-heading > span:last-child { color:#426047; }
+.cp-app #professor-situacao-problema { background:#fff1d9; border-color:#eeddb8; color:#685128; }
+.cp-app #etapa-1-planejamento { background:#fdfbff; }
+.cp-app #etapa-3-fontes { background:#f8fbff; }
+.cp-app .cp-professor-hero + .cp-current-theme ~ .grid > div:first-child > .cp-card { background:#f4f8fd; }
+.cp-app .cp-professor-hero + .cp-current-theme ~ .grid > div:first-child > .cp-card .rounded-xl.bg-amber-100 { background:#fff0d6; }
+.cp-app .cp-professor-hero { background:#f5e5f0; }
+.cp-app .cp-professor-intro h1 > span { color:#853d63; }
+.cp-app .cp-teacher-sign { color:#635162; }
+.cp-app .cp-teacher-avatar { color:#795370; background:#fdf8fc; border-color:#e6d7e5; }
+.cp-app .cp-teacher-action-card { background:#fffdfd; border-color:#e4d8e4; }
+.cp-app .cp-action-star { color:#805071; }
+.cp-app .cp-teacher-action-card > .cp-eyebrow, .cp-app .cp-teacher-action-card > p { color:#605b68; }
+.cp-app .cp-current-theme-icon { background:#e6edf8; color:#455e7b; }
+.cp-app .cp-eyebrow { color:#575360; }
+.cp-app .cp-mini-label { color:#625e6d; }
+.cp-app .cp-source-purpose { background:#e5f0df; color:#3e5a43; }
+.cp-app .cp-source-card:nth-child(2) .cp-source-purpose { background:#fff0d6; color:#725322; }
+.cp-app .cp-source-card:nth-child(3) .cp-source-purpose { background:#eee5f7; color:#5b4c71; }
+.cp-app .cp-source-card a { text-decoration-color:#9aa98a; }
+.cp-app .cp-gold-intro { background:#fbf1d7; border-color:#e9dbb8; }
+.cp-app .cp-exam-protocol { background:#eee7f5; color:#393541; border:1px solid #dfd4e8; }
+.cp-app .cp-exam-protocol > h3 { color:#554768; }
+.cp-app .cp-exam-protocol .grid > div { background:#e4edf8; border-color:#d2deeb; }
+.cp-app .cp-exam-protocol .text-emerald-400 { color:#426047; }
+.cp-app .cp-exam-protocol .text-amber-400 { color:#735523; }
+.cp-app .cp-exam-protocol .text-slate-300 { color:#5d5969; }
+.cp-app .cp-footer { color:#625e6d; border-color:#e3deea; }
+.cp-app .cp-footer-brand { color:#504a59; }
+.cp-app .cp-card.cp-lab-writing { background:#fffdfd; }
+.cp-app .cp-card.cp-connectives { background:#f7f9fd; }
+.cp-app .cp-card.cp-connectives button { background:#f0eaf7; border-color:#e1d9ea; color:#4d4758; }
+.cp-app .cp-card.cp-connectives button:hover { background:#e4f0e8; border-color:#ccdfd1; color:#3d5942; }
+.cp-app .cp-source-card { background:#f8f7fb; border-color:#e4dfeb; }
+.cp-app .cp-source-card:nth-child(3n+1) { background:#f2f7ee; }
+.cp-app .cp-source-card:nth-child(3n+2) { background:#fdf6e9; }
+.cp-app .cp-source-card:nth-child(3n) { background:#f3eef9; }
+.cp-app .cp-source-card:nth-child(4n) { background:#fff4e9; }
+.cp-app .cp-card.cp-exam-protocol { background:#eee7f5; }
+.cp-app .cp-card:not(.cp-control-panel):hover { border-color:#d9cfdf; }
+
+/* Pequenas variações de cor organizam o cronograma sem esconder texto ou controles. */
+.cp-app .cp-main .lg\\:col-span-8.space-y-4 > .cp-card:nth-child(2) { background:#f0f6eb; }
+.cp-app .cp-main .lg\\:col-span-8.space-y-4 > .cp-card:nth-child(3) { background:#f5f1fa; }
+.cp-app .cp-main .lg\\:col-span-8.space-y-4 > .cp-card:nth-child(4) { background:#edf4fb; }
+.cp-app .cp-main .lg\\:col-span-8.space-y-4 > .cp-card:nth-child(5) { background:#fbf0f5; }
+.cp-app .cp-main .lg\\:col-span-8.space-y-4 > .cp-card:nth-child(6) { background:#fbf3e5; }
+.cp-app .text-justify { text-align:left; }
+@media(max-width:680px) {
+  .cp-app .cp-plan-progress { background:#fffdfd; }
+  .cp-app .cp-footer { color:#575362; }
 }
 `;
