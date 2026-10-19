@@ -873,7 +873,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Cronômetro Oficial de 60 Minutos */}
-                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end" text-white px-4 py-3 rounded-2xl border border-slate-800 shrink-0">
+               <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end">
                   <Clock className={`w-6 h-6 ${timerRunning ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`} />
                   <div>
                     <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
