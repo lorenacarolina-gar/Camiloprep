@@ -709,11 +709,11 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
               className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-sm transition hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:cursor-wait disabled:opacity-60"
             >
               <Sparkles aria-hidden="true" className={`h-5 w-5 shrink-0 ${isGeneratingTheme ? 'animate-pulse' : ''}`} />
-              <span>{isGeneratingTheme ? 'Preparando tema e fontes...' : 'Gerar situação-problema inédita com IA'}</span>
+              <span>{isGeneratingTheme ? 'Gerando situação-problema...' : 'Gerar situação-problema inédita com IA'}</span>
             </button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-emerald-100/90">A IA cria uma proposta nova e prepara três leituras com fontes para a etapa 3. O tema e as leituras são atualizados juntos.</p>
+        <p className="mt-3 text-xs text-emerald-100/90">A IA cria uma proposta nova e troca o tema usado no planejamento. Ela tenta evitar os temas já vistos.</p>
         {themeGenerationError && <p role="alert" className="mt-3 rounded-xl border border-rose-300/50 bg-rose-950/40 p-3 text-sm text-rose-100">{themeGenerationError}</p>}
         <p className="mt-4 text-xs text-emerald-100/90">O planejamento fica salvo neste navegador. Só é enviado à IA quando você pede uma pista ou feedback.</p>
       </section>
@@ -838,33 +838,18 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
           <section id="etapa-3-fontes" aria-labelledby="titulo-repertorio" aria-busy={isGeneratingTheme} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
             <div>
               <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Etapa 3 • Repertório com fonte</span>
-              <h3 id="titulo-repertorio" className="mt-1 text-lg font-extrabold text-slate-900">Entenda, investigue e construa seu argumento</h3>
-              <p className="mt-2 text-sm font-semibold text-emerald-900">Leituras para: {selectedTheme.title}</p>
-              <p className="mt-2 text-sm text-slate-600">Leia o material original e explique a ideia com suas palavras. Confira o ano e o público da pesquisa antes de usar um dado.</p>
-              <p className="mt-2 text-xs text-slate-500">Links e resumos de um catálogo conferido em {SOURCE_CATALOG_CHECKED_AT}. {selectedTheme.studySources ? 'A IA selecionou os materiais e preparou as orientações para este tema.' : 'Seleção preparada para este tema de treino.'} A seleção não é uma pesquisa na internet em tempo real.</p>
+              <h3 id="titulo-repertorio" className="mt-1 text-lg font-extrabold text-slate-900">Leia antes de usar um dado</h3>
+              <p className="mt-1 text-sm text-slate-600">Use as fontes para entender uma ideia e depois explique-a com suas palavras. Os links abrem os materiais originais.</p>
             </div>
-            {isGeneratingTheme && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">Preparando a nova proposta e suas leituras. A seleção abaixo ainda pertence ao tema atual.</p>}
+            {isGeneratingTheme && <p role="status" className="sr-only">Preparando a nova proposta e suas leituras. A seleção abaixo ainda pertence ao tema atual.</p>}
             <div className="space-y-3">
-              {studySources.map(({ source, purpose, connection, howToUse, readingQuestion }) => (
-                <article key={source.id} data-source-id={source.id} className="min-w-0 rounded-xl border border-slate-200 p-4 space-y-3">
-                  <div>
-                    <div className="text-xs font-extrabold text-emerald-800">{SOURCE_PURPOSES[purpose]}</div>
-                    <h4 className="mt-2 text-sm font-bold text-slate-900">{source.title}</h4>
-                    <p className="mt-1 text-xs font-semibold text-slate-600">{source.institution}</p>
-                    <p className="mt-1 text-xs text-slate-500">{source.kind} • {source.language}</p>
-                    <p className="mt-1 text-xs text-slate-500">Publicação ou período: {source.date}</p>
-                  </div>
-                  <p className="text-sm text-slate-700"><strong>O que você encontra:</strong> {source.summary}</p>
-                  <div className="space-y-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-950">
-                    <p><strong>Relação com a situação-problema:</strong> {connection}</p>
-                    <p><strong>Como usar no seu raciocínio:</strong> {howToUse}</p>
-                    <p><strong>Pergunta para guiar a leitura:</strong> {readingQuestion}</p>
-                  </div>
-                  <p className="text-xs leading-relaxed text-slate-600"><strong>Cuidado ao citar:</strong> {source.caution}</p>
-                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-emerald-200 bg-white p-3 text-emerald-900 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700">
-                    <span className="inline-flex items-center gap-2 text-sm font-bold">Ler fonte original<ArrowRight className="h-4 w-4 shrink-0" /></span>
-                    <span className="mt-1 block break-all text-[11px] underline underline-offset-2">{source.url}</span>
+              {studySources.map(({ source, connection }) => (
+                <article key={source.id} data-source-id={source.id} className="rounded-xl border border-slate-200 p-3.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">{source.institution} • {source.date}</div>
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" title={`Fonte do catálogo conferido em ${SOURCE_CATALOG_CHECKED_AT}. ${source.caution}`} className="mt-1 inline-flex items-start gap-1 text-sm font-bold text-slate-900 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-800">
+                    {source.title}<ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   </a>
+                  <p className="mt-1 text-xs text-slate-600">Pode ajudar em: {connection}</p>
                 </article>
               ))}
               {studySources.length === 0 && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Este tema ainda não tem leituras vinculadas. Use “Gerar situação-problema inédita com IA” para criar uma proposta com fontes.</p>}
@@ -1568,7 +1553,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs border border-emerald-200 transition shrink-0"
                     >
                       <RefreshCw className={`w-4 h-4 text-emerald-700 ${isGeneratingTheme ? 'animate-spin' : ''}`} />
-                      {isGeneratingTheme ? 'Preparando tema e fontes...' : '+ Gerar Tema Inédito IA'}
+                      {isGeneratingTheme ? 'Criando Proposta...' : '+ Gerar Tema Inédito IA'}
                     </button>
                   </div>
                   {themeGenerationError && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">{themeGenerationError}</p>}
