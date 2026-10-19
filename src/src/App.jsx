@@ -841,14 +841,14 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
           <div className="space-y-6">
             {/* BARRA DE CONTROLE DE TEMPO E SELETOR DE TEMA */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex flex-col gap-4">
                 {/* Seletor de Proposta */}
-                <div className="flex-1 space-y-1.5">
+                <div className="w-full space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
                     Proposta de Situação-Problema (Padrão São Camilo):
                   </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col md:flex-row gap-2">
                     <select
                       value={selectedThemeId}
                       onChange={(e) => setSelectedThemeId(e.target.value)}
@@ -873,7 +873,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Cronômetro Oficial de 60 Minutos */}
-                <div className="flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 shrink-0">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end" text-white px-4 py-3 rounded-2xl border border-slate-800 shrink-0">
                   <Clock className={`w-6 h-6 ${timerRunning ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`} />
                   <div>
                     <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
