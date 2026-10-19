@@ -216,34 +216,49 @@ const CONNECTIVES_BANK = {
 // ============================================================================
 // FUNÇÃO AUXILIAR PARA CHAMADA À API GEMINI COM EXPONENTIAL BACKOFF
 // ============================================================================
-async function callGeminiAPI(payload) {
-  const apiKey = "";
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-  const delays = [1000, 2000, 4000, 8000];
+ async function callGeminiAPI(payload) {
+  const functionUrl = "https://vejldzbaigkgdyxmelzj.supabase.co/functions/v1/camiloprep-ai";
+  const supabasePublishableKey = "sb_publishable_iZ1QP705THl1tmKl_U9orQ_LXOyvfoi";
+  const passwordStorageKey = "camiloprep-ai-password";
 
-  for (let attempt = 0; attempt <= delays.length; attempt++) {
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+  let accessPassword = sessionStorage.getItem(passwordStorageKey);
 
-      if (!response.ok) {
-        throw new Error(`HTTP status ${response.status}`);
-      }
+  if (!accessPassword) {
+    accessPassword = window.prompt("Digite sua senha de acesso à IA:");
 
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('Resposta vazia da IA');
-      return text;
-    } catch (err) {
-      if (attempt === delays.length) {
-        throw err;
-      }
-      await new Promise((res) => setTimeout(res, delays[attempt]));
+    if (!accessPassword) {
+      throw new Error("A senha de acesso não foi informada.");
     }
+
+    sessionStorage.setItem(passwordStorageKey, accessPassword);
   }
+
+  const response = await fetch(functionUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: supabasePublishableKey,
+      "x-app-password": accessPassword,
+    },
+    body: JSON.stringify({ payload }),
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (response.status === 403) {
+    sessionStorage.removeItem(passwordStorageKey);
+    throw new Error("Senha incorreta. Tente novamente.");
+  }
+
+  if (!response.ok) {
+    throw new Error(result.error || `Erro HTTP ${response.status}`);
+  }
+
+  if (typeof result.text !== "string") {
+    throw new Error("A função não retornou texto.");
+  }
+
+  return result.text;
 }
 
 export default function App() {
