@@ -363,7 +363,7 @@ function getAdaptiveFocus(essayHistory) {
   );
 }
 
-function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam }) {
+function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGenerateNewSituationProblem, isGeneratingTheme, themeGenerationError }) {
   const storageKey = `camiloprep_plano_${selectedTheme.id}`;
   const [plan, setPlan] = useState(() => {
     try {
@@ -478,20 +478,37 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam }) {
     <div className="space-y-6">
       <section className="rounded-2xl bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-5 sm:p-7 text-white shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-800/60 px-3 py-1 text-xs font-bold text-emerald-100">
               <GraduationCap className="h-4 w-4" /> Professora Virtual
             </div>
             <h2 className="mt-3 text-xl sm:text-2xl font-extrabold">Vamos planejar sua redação</h2>
             <p className="mt-1 max-w-3xl text-sm text-emerald-100">Tema de hoje: {selectedTheme.title}</p>
           </div>
-          <button
-            onClick={onStartMockExam}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-extrabold text-emerald-950 transition hover:bg-amber-200"
-          >
-            <Clock className="h-4 w-4" /> Começar simulado de 60 min
-          </button>
+          <div className="flex w-full shrink-0 flex-col gap-3 md:w-80">
+            <button
+              type="button"
+              onClick={onStartMockExam}
+              disabled={isGeneratingTheme}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-extrabold text-emerald-950 transition hover:bg-amber-200 disabled:cursor-wait disabled:opacity-60"
+            >
+              <Clock className="h-4 w-4" /> Começar simulado de 60 min
+            </button>
+            <button
+              id="gerar-situacao-problema"
+              type="button"
+              onClick={onGenerateNewSituationProblem}
+              disabled={isGeneratingTheme}
+              aria-busy={isGeneratingTheme}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-sm transition hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:cursor-wait disabled:opacity-60"
+            >
+              <Sparkles aria-hidden="true" className={`h-5 w-5 shrink-0 ${isGeneratingTheme ? 'animate-pulse' : ''}`} />
+              <span>{isGeneratingTheme ? 'Gerando situação-problema...' : 'Gerar situação-problema inédita com IA'}</span>
+            </button>
+          </div>
         </div>
+        <p className="mt-3 text-xs text-emerald-100/90">A IA cria uma proposta nova e troca o tema usado no planejamento. Ela tenta evitar os temas já vistos.</p>
+        {themeGenerationError && <p role="alert" className="mt-3 rounded-xl border border-rose-300/50 bg-rose-950/40 p-3 text-sm text-rose-100">{themeGenerationError}</p>}
         <p className="mt-4 text-xs text-emerald-100/90">O planejamento fica salvo neste navegador. Só é enviado à IA quando você pede uma pista ou feedback.</p>
       </section>
 
@@ -644,6 +661,7 @@ export default function App() {
   const [themes, setThemes] = useState(INITIAL_THEMES);
   const [selectedThemeId, setSelectedThemeId] = useState(INITIAL_THEMES[0].id);
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
+  const [themeGenerationError, setThemeGenerationError] = useState('');
   const [customThemeAxis, setCustomThemeAxis] = useState('Saúde, Farmácia e Sociedade');
 
   // Estado do Editor de Redação
@@ -914,13 +932,38 @@ export default function App() {
   }, [essayText, selectedTheme]);
 
   // ============================================================================
-  // AÇÃO: GERAR NOVO TEMA INÉDITO SÃO CAMILO VIA GEMINI API
+  // AÇÃO: GERAR NOVO TEMA COM IA PELA FUNÇÃO DO SUPABASE
   // ============================================================================
-  const handleGenerateCustomTheme = async () => {
+  const handleGenerateCustomTheme = async ({ randomizeAxis = false } = {}) => {
+    if (randomizeAxis && (essayText.trim() || essayTitle.trim())) {
+      setThemeGenerationError('Há uma redação no simulador. Na página 1, salve uma cópia do título e do texto e depois esvazie os dois campos. Volte aqui para gerar outra situação-problema.');
+      return;
+    }
+
+    const variedAxes = [
+      'Saúde pública, ética e práticas farmacêuticas',
+      'Saúde mental, tecnologia e sociedade',
+      'Meio ambiente, medicamentos e Saúde Única',
+      'Acesso à saúde, equidade e humanização',
+      'Ciência, desinformação e responsabilidade social',
+      'Envelhecimento, cuidado e políticas públicas',
+      'Vacinação, saúde coletiva e confiança social'
+    ];
+    const generationAxis = randomizeAxis
+      ? variedAxes[Math.floor(Math.random() * variedAxes.length)]
+      : customThemeAxis;
+    const recentThemeTitles = themes
+      .slice(0, 8)
+      .map((theme) => `- ${theme.title}`)
+      .join('\n');
+
+    setThemeGenerationError('');
     setIsGeneratingTheme(true);
     try {
       const prompt = `Você é elaborador oficial da banca de Redação Agendada do Centro Universitário São Camilo (Edital nº 084/2026) para o curso de Farmácia.
-Crie uma proposta de redação INÉDITA, atual e rigorosamente no padrão São Camilo sobre o eixo: "${customThemeAxis}".
+Crie uma proposta de redação INÉDITA, atual e rigorosamente no padrão São Camilo sobre o eixo: "${generationAxis}".
+Não repita os títulos nem o recorte das propostas recentes abaixo; escolha um problema social ou de saúde diferente dentro do eixo indicado:
+${recentThemeTitles || '- Nenhum tema anterior'}
 A proposta deve conter:
 1. Um título claro do tema.
 2. Um Texto-Base contextualizado (entre 110 e 150 palavras) trazendo dados ou conceitos reais e atuais.
@@ -946,19 +989,26 @@ A proposta deve conter:
       const rawJson = await callGeminiAPI(payload);
       const parsed = JSON.parse(rawJson);
 
+      if (!parsed || ['title', 'baseText', 'problemSituation'].some((field) =>
+        typeof parsed[field] !== 'string' || !parsed[field].trim()
+      )) {
+        throw new Error('A IA retornou uma proposta incompleta. O tema anterior foi mantido. Tente gerar novamente.');
+      }
+
       const newTheme = {
         id: `tema-ia-${Date.now()}`,
         daySuggestion: 'Tema Inédito IA',
-        category: parsed.category || customThemeAxis,
-        title: parsed.title,
-        baseText: parsed.baseText,
-        problemSituation: parsed.problemSituation
+        category: typeof parsed.category === 'string' && parsed.category.trim() ? parsed.category.trim() : generationAxis,
+        title: parsed.title.trim(),
+        baseText: parsed.baseText.trim(),
+        problemSituation: parsed.problemSituation.trim()
       };
 
       setThemes((prev) => [newTheme, ...prev]);
       setSelectedThemeId(newTheme.id);
+      setThemeGenerationError('');
     } catch (error) {
-      setEvalError('Não foi possível gerar o tema agora. Tente novamente em instantes.');
+      setThemeGenerationError(error.message || 'Não foi possível gerar o tema agora. Tente novamente em instantes.');
     } finally {
       setIsGeneratingTheme(false);
     }
@@ -1260,7 +1310,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                     </select>
 
                     <button
-                      onClick={handleGenerateCustomTheme}
+                      onClick={() => handleGenerateCustomTheme()}
                       disabled={isGeneratingTheme || isMockExam}
                       className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs border border-emerald-200 transition shrink-0"
                     >
@@ -1268,6 +1318,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       {isGeneratingTheme ? 'Criando Proposta...' : '+ Gerar Tema Inédito IA'}
                     </button>
                   </div>
+                  {themeGenerationError && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">{themeGenerationError}</p>}
                 </div>
 
                 {/* Cronômetro Oficial de 60 Minutos */}
@@ -1900,6 +1951,9 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
             selectedTheme={selectedTheme}
             essayHistory={essayHistory}
             onStartMockExam={handleStartMockExam}
+            onGenerateNewSituationProblem={() => handleGenerateCustomTheme({ randomizeAxis: true })}
+            isGeneratingTheme={isGeneratingTheme}
+            themeGenerationError={themeGenerationError}
           />
         )}
 
