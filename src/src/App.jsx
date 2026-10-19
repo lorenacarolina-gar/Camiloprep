@@ -1615,7 +1615,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                     <div className="text-[11px] uppercase tracking-wider text-rose-800 font-semibold">
                       {isMockExam ? (timerRunning ? 'Simulado em andamento' : 'Tempo encerrado') : 'Tempo Oficial (60 min)'}
                     </div>
-                    <div className="text-2xl font-mono font-extrabold tracking-wider text-white">
+                    <div className="text-2xl font-mono font-extrabold tracking-rose text-white">
                       {formatTime(secondsLeft)}
                     </div>
                   </div>
@@ -1625,7 +1625,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       className={`p-2.5 rounded-xl font-bold text-xs flex items-center gap-1 transition ${
                         timerRunning
                           ? 'bg-rose-500 hover:bg-rose-600 text-white-950'
-                          : 'bg-lime-500 hover:bg-lime-600 text-white-950'
+                          : 'bg-rose-500 hover:bg-lime-200 text-white-950'
                       }`}
                       title={timerRunning ? 'Pausar Cronômetro' : 'Iniciar Cronômetro de 60 min'}
                     >
@@ -1637,7 +1637,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                         setTimerRunning(false);
                         setSecondsLeft(3600);
                       }}
-                      className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                      className="p-2.5 rounded-xl bg-rose-800 hover:bg-rose-700 text-white-300 transition"
                       title="Reiniciar 60 minutos"
                     >
                       <RotateCcw className="w-4 h-4" />
@@ -1647,7 +1647,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
               </div>
 
               {isMockExam && (
-                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-amber-950">
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-rose-300 bg-lime-50 px-3.5 py-3 text-sm text-white-950">
                   <span className="font-semibold">
                     {secondsLeft > 0
                       ? 'Modo simulado ativo: dicas e conectivos rápidos estão ocultos.'
@@ -1655,7 +1655,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                   </span>
                   <button
                     onClick={handleEndMockExam}
-                    className="shrink-0 rounded-lg border border-amber-400 bg-white px-3 py-2 text-xs font-bold text-amber-950 hover:bg-amber-100"
+                    className="shrink-0 rounded-lg border border-rose-400 bg-white px-3 py-2 text-xs font-bold text-white-950 hover:bg-lime-200"
                   >
                     Encerrar simulado
                   </button>
@@ -1676,35 +1676,35 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
               {/* COLUNA ESQUERDA (5 cols): TEXTO-BASE, SITUAÇÃO-PROBLEMA & MONITOR DE PARÁGRAFOS */}
               <div className="lg:col-span-5 space-y-5">
                 {/* Card da Proposta Oficial */}
-                <div className="cp-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="cp-proposal-heading bg-emerald-900 text-white px-5 py-3.5 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-200">
+                <div className="cp-card bg-white rounded-2xl shadow-sm border border-rose-200 overflow-hidden">
+                  <div className="cp-proposal-heading bg-rose-900 text-white px-5 py-3.5 flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-pink-200">
                       {selectedTheme.category}
                     </span>
-                    <span className="text-xs bg-emerald-800 px-2.5 py-0.5 rounded-full font-semibold">
+                    <span className="text-xs bg-rose-800 px-2.5 py-0.5 rounded-full font-semibold">
                       {selectedTheme.daySuggestion}
                     </span>
                   </div>
                   <div className="p-5 space-y-4">
-                    <h2 className="text-lg font-extrabold text-slate-900 leading-snug">
+                    <h2 className="text-lg font-extrabold text-rose-900 leading-snug">
                       {selectedTheme.title}
                     </h2>
 
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="bg-lime-50 border border-pink-100 rounded-xl p-4 space-y-2">
+                      <div className="text-xs font-bold uppercase tracking-wider text-rose-500">
                         Texto-Base (Leia e Parafraseie — Não copie trechos!)
                       </div>
-                      <p className="text-sm text-slate-700 leading-relaxed text-justify">
+                      <p className="text-sm text-rose-700 leading-relaxed text-justify">
                         {selectedTheme.baseText}
                       </p>
                     </div>
 
-                    <div className="bg-amber-50/90 border border-amber-300 rounded-xl p-4 space-y-1.5">
-                      <div className="text-xs font-extrabold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div className="bg-lime-50/90 border border-rose-300 rounded-xl p-4 space-y-1.5">
+                      <div className="text-xs font-extrabold uppercase tracking-wider text-white-900 flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                         Comando da Situação-Problema:
                       </div>
-                      <p className="text-sm font-medium text-amber-950 leading-relaxed">
+                      <p className="text-sm font-medium text-white-950 leading-relaxed">
                         {selectedTheme.problemSituation}
                       </p>
                     </div>
@@ -1712,19 +1712,19 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Card Monitor de Equilíbrio dos 4 Parágrafos */}
-                <div className={`${isMockExam && timerRunning ? 'hidden' : ''} bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4`}>
+                <div className={`${isMockExam && timerRunning ? 'hidden' : ''} bg-white rounded-2xl shadow-sm border border-rose-200 p-5 space-y-4`}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-sm font-extrabold text-white-800 uppercase tracking-wider flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-rose-600" />
                       Termômetro de Equilíbrio por Parágrafo
                     </h3>
-                    <span className="text-xs font-semibold text-slate-500">
+                    <span className="text-xs font-semibold text-rose-500">
                       {textMetrics.paragraphCount}/4 parágrafos
                     </span>
                   </div>
 
                   {textMetrics.paragraphCounts.length === 0 ? (
-                    <p className="text-xs text-slate-500 bg-slate-50 p-3.5 rounded-xl border border-dashed border-slate-200">
+                    <p className="text-xs text-rose-500 bg-lime-50 p-3.5 rounded-xl border border-dashed border-rose-200">
                       Comece a digitar sua redação ao lado. Pule uma linha (Enter) para separar cada um dos 4 parágrafos e ver o equilíbrio em tempo real.
                     </p>
                   ) : (
