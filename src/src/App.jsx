@@ -261,43 +261,248 @@ const CONNECTIVES_BANK = {
   return result.text;
 }
 
+// Catálogo editorial: links e resumos conferidos em 19/10/2026.
+// A IA retorna IDs; URLs, títulos, instituições, datas e resumos vêm somente daqui.
+// Não há pesquisa web em tempo real nesta versão. Revisar o catálogo periodicamente.
+const SOURCE_CATALOG_CHECKED_AT = '19/10/2026';
+const SOURCE_PURPOSES = {
+  entender: '1. Entender o problema',
+  evidencias: '2. Consultar evidências',
+  argumentar: '3. Construir seu argumento'
+};
+
 const SOURCE_LIBRARY = [
   {
+    id: 'cff-internet',
     title: 'Uso de medicamentos por influência da internet preocupa farmacêuticos',
     institution: 'Conselho Federal de Farmácia (CFF)',
-    year: '2026',
-    theme: 'Automedicação, redes sociais e uso responsável de medicamentos',
+    publisher: 'cff', date: '18/05/2026', language: 'Português',
+    kind: 'Comunicação institucional', purposes: ['entender', 'argumentar'],
+    summary: 'O CFF discute os riscos de usar medicamentos por indicação de influenciadores e o papel da orientação profissional na educação em saúde.',
+    caution: 'É uma análise institucional. Esta notícia não comprova um percentual de pessoas que se automedicam.',
     url: 'https://site.cff.org.br/noticia/Noticias-gerais/18/05/2026/uso-de-medicamentos-por-influencia-da-internet-preocupa-farmaceuticos'
   },
   {
-    title: 'Dia Nacional do Uso Racional de Medicamentos',
+    id: 'anvisa-uso-racional',
+    title: 'Hoje é Dia Nacional do Uso Racional de Medicamentos',
     institution: 'Agência Nacional de Vigilância Sanitária (Anvisa)',
-    year: '2023',
-    theme: 'Uso racional de medicamentos e descarte adequado',
+    publisher: 'anvisa', date: '05/05/2023', language: 'Português',
+    kind: 'Orientação institucional', purposes: ['entender', 'argumentar'],
+    summary: 'Material educativo da Anvisa sobre uso racional de medicamentos e prevenção de problemas associados ao uso desses produtos.',
+    caution: 'Orientação educativa, não pesquisa populacional. Para dados sobre descarte, consulte uma fonte específica sobre resíduos.',
     url: 'https://www.gov.br/anvisa/pt-br/assuntos/noticias-anvisa/2023/hoje-e-dia-nacional-do-uso-racional-de-medicamentos'
   },
   {
-    title: 'One Health (Saúde Única)',
+    id: 'oms-saude-unica',
+    title: 'One Health — Saúde Única',
     institution: 'Organização Mundial da Saúde (OMS)',
-    year: '2026',
-    theme: 'Relação entre saúde humana, animal, vegetal e ambiental',
+    publisher: 'oms', date: '08/05/2026', language: 'Inglês',
+    kind: 'Síntese técnica e conceito', purposes: ['entender', 'evidencias', 'argumentar'],
+    summary: 'A abordagem Saúde Única integra saúde humana, animal, vegetal e ambiental. A OMS relaciona essa integração à prevenção de doenças, à resistência antimicrobiana e aos riscos ambientais.',
+    caution: 'É uma abordagem conceitual e técnica; não é uma medição de resíduos em rios brasileiros.',
     url: 'https://www.who.int/news-room/fact-sheets/detail/one-health'
   },
   {
-    title: 'Saúde mental dos adolescentes',
+    id: 'oms-adolescentes',
+    title: 'Mental health of adolescents — Saúde mental dos adolescentes',
     institution: 'Organização Mundial da Saúde (OMS)',
-    year: '2025',
-    theme: 'Saúde mental, juventude, escola e influência da mídia',
+    publisher: 'oms', date: '01/09/2025', language: 'Inglês',
+    kind: 'Síntese de evidências', purposes: ['entender', 'evidencias', 'argumentar'],
+    summary: 'A OMS apresenta fatores sociais, familiares e escolares associados à saúde mental na adolescência, incluindo pressões dos pares e influência da mídia.',
+    caution: 'O foco são adolescentes. Não atribua todo sofrimento mental às telas nem generalize os dados para adultos.',
     url: 'https://www.who.int/news-room/fact-sheets/detail/adolescent-mental-health'
   },
   {
-    title: 'Constituição da República Federativa do Brasil',
-    institution: 'Presidência da República — Portal do Planalto',
-    year: '1988',
-    theme: 'Direito à saúde e políticas públicas (artigo 196)',
-    url: 'https://www4.planalto.gov.br/legislacao/portal-legis/legislacao-1/constituicao'
+    id: 'constituicao-saude',
+    title: 'Constituição Federal — artigo 196',
+    institution: 'Câmara dos Deputados — texto constitucional atualizado',
+    publisher: 'camara', date: '1988 — consulte o texto atualizado', language: 'Português',
+    kind: 'Texto legal', purposes: ['argumentar'],
+    summary: 'O artigo 196 atribui ao Estado o dever de garantir o direito à saúde por políticas que reduzam riscos e assegurem acesso universal e igualitário aos serviços.',
+    caution: 'Localize “Art. 196” no documento. A previsão do direito, por si só, não demonstra que ele já foi efetivado.',
+    url: 'https://www2.camara.leg.br/legin/fed/consti/1988/constituicao-1988-5-outubro-1988-322142-normaatualizada-pl.html'
+  },
+  {
+    id: 'cff-datafolha',
+    title: 'Pesquisa CFF/Datafolha sobre uso e descarte de medicamentos',
+    institution: 'CFF / Instituto Datafolha — divulgação oficial no CRF-PE',
+    publisher: 'cff', date: '2019 — coleta de 13 a 20 de março', language: 'Português',
+    kind: 'Pesquisa com divulgação institucional', purposes: ['evidencias'],
+    summary: 'A pesquisa entrevistou 2.074 pessoas de 16 anos ou mais que haviam usado medicamentos nos seis meses anteriores. Investigou automedicação, orientação e descarte; 77% relataram o hábito de se automedicar e 76% indicaram formas incorretas de descarte.',
+    caution: 'Dados de 2019, desse público específico. Não apresente os percentuais como retrato atual de toda a população brasileira.',
+    url: 'https://pe.cff.org.br/noticia/noticias-do-crf-pe/27/04/2019/quase-metade-dos-brasileiros-que-usaram-medicamentos-nos-ultimos-seis-meses-se-automedicou-ate-uma-v'
+  },
+  {
+    id: 'sinir-medicamentos',
+    title: 'Medicamentos, seus Resíduos e Embalagens',
+    institution: 'Ministério do Meio Ambiente — SINIR',
+    publisher: 'mma', date: 'Página sem data; inclui resultados de 2023', language: 'Português',
+    kind: 'Política pública e resultados administrativos', purposes: ['entender', 'evidencias', 'argumentar'],
+    summary: 'O SINIR explica a logística reversa de medicamentos domiciliares, as responsabilidades na coleta e na destinação e os riscos de descarte no solo e no esgoto.',
+    caution: 'Os resultados de coleta se referem ao período indicado no portal. Não equivalem ao total de medicamentos descartados no país.',
+    url: 'https://sinir.gov.br/perfis/logistica-reversa/logistica-reversa/medicamentos-seus-residuos-e-embalagens/'
+  },
+  {
+    id: 'oms-resistencia',
+    title: 'Antimicrobial resistance — Resistência antimicrobiana',
+    institution: 'Organização Mundial da Saúde (OMS)',
+    publisher: 'oms', date: '16/07/2026', language: 'Inglês',
+    kind: 'Síntese de evidências', purposes: ['entender', 'evidencias'],
+    summary: 'A OMS explica como a resistência dos microrganismos dificulta o tratamento de infecções e relaciona o problema ao uso inadequado e excessivo de antimicrobianos.',
+    caution: 'O foco são antimicrobianos. Não estenda automaticamente essa explicação a todas as classes de medicamentos.',
+    url: 'https://www.who.int/news-room/fact-sheets/detail/antimicrobial-resistance'
+  },
+  {
+    id: 'oms-hbsc',
+    title: 'Pesquisa HBSC — uso de redes sociais e jogos por adolescentes (volume 6)',
+    institution: 'OMS — Escritório Regional para a Europa / HBSC',
+    publisher: 'oms', date: '24/09/2024 — dados de 2021/2022', language: 'Inglês',
+    kind: 'Relatório de pesquisa', purposes: ['evidencias'],
+    summary: 'O relatório investiga o uso de redes sociais e jogos por estudantes de 11, 13 e 15 anos em 44 países e regiões da Europa, Ásia Central e Canadá, considerando idade, gênero e desigualdade social.',
+    caution: 'A pesquisa não representa o Brasil. Associação entre comportamentos e saúde não demonstra, sozinha, uma relação de causa e efeito.',
+    url: 'https://www.who.int/europe/publications/i/item/9789289061322'
+  },
+  {
+    id: 'ibge-pns',
+    title: 'PNS 2019 — acesso e utilização dos serviços de saúde',
+    institution: 'Instituto Brasileiro de Geografia e Estatística (IBGE)',
+    publisher: 'ibge', date: '04/09/2020 — dados de 2019', language: 'Português',
+    kind: 'Pesquisa estatística nacional', purposes: ['evidencias'],
+    summary: 'A Pesquisa Nacional de Saúde apresenta informações sobre procura por atendimento, rede pública, planos de saúde e diferenças de utilização entre grupos da população brasileira.',
+    caution: 'Os resultados descrevem 2019. Ao usar um dado, preserve o ano, o grupo analisado e a definição do indicador.',
+    url: 'https://agenciadenoticias.ibge.gov.br/agencia-sala-de-imprensa/2013-agencia-de-noticias/releases/28793-pns-2019-sete-em-cada-dez-pessoas-que-procuram-o-mesmo-servico-de-saude-vao-a-rede-publica'
+  },
+  {
+    id: 'ms-acolhimento',
+    title: 'Acolhimento — Política Nacional de Humanização',
+    institution: 'Ministério da Saúde — Biblioteca Virtual em Saúde',
+    publisher: 'ms', date: 'Novembro de 2008', language: 'Português',
+    kind: 'Conceito e diretriz de política pública', purposes: ['entender', 'argumentar'],
+    summary: 'O acolhimento envolve escuta, reconhecimento das necessidades do usuário e responsabilidade pela resposta oferecida pelos serviços. Integra a Política Nacional de Humanização.',
+    caution: 'Use o conceito de acolhimento. A página é histórica e não deve servir como referência atual sobre competências legais de profissões.',
+    url: 'https://bvsms.saude.gov.br/acolhimento/'
+  },
+  {
+    id: 'ms-ciencia',
+    title: 'Saúde com Ciência',
+    institution: 'Ministério da Saúde',
+    publisher: 'ms', date: 'Página sem data de publicação indicada', language: 'Português',
+    kind: 'Iniciativa pública de informação em saúde', purposes: ['entender', 'argumentar'],
+    summary: 'A iniciativa acompanha a desinformação em saúde e reúne comunicação, capacitação e cooperação institucional, com atenção a conteúdos relacionados à vacinação.',
+    caution: 'A existência da iniciativa não comprova, por si só, uma redução da desinformação. Não invente resultados de eficácia.',
+    url: 'https://www.gov.br/saude/pt-br/assuntos/saude-com-ciencia'
+  },
+  {
+    id: 'oms-envelhecimento',
+    title: 'Ageing and health — Envelhecimento e saúde',
+    institution: 'Organização Mundial da Saúde (OMS)',
+    publisher: 'oms', date: '01/10/2025', language: 'Inglês',
+    kind: 'Síntese de evidências', purposes: ['entender', 'evidencias', 'argumentar'],
+    summary: 'A OMS apresenta o envelhecimento populacional e os desafios de adaptar os sistemas de saúde e de cuidado às necessidades das pessoas idosas.',
+    caution: 'Diferencie projeções futuras de dados já observados e não trate o envelhecimento como uma experiência igual para todas as pessoas.',
+    url: 'https://www.who.int/news-room/fact-sheets/detail/ageing-and-health'
+  },
+  {
+    id: 'oms-vacinacao',
+    title: 'Immunization coverage — Cobertura vacinal',
+    institution: 'Organização Mundial da Saúde (OMS)',
+    publisher: 'oms', date: '15/07/2026 — dados de 2025', language: 'Inglês',
+    kind: 'Síntese de indicadores de vacinação', purposes: ['entender', 'evidencias'],
+    summary: 'A OMS reúne indicadores de vacinação e discute desigualdades de cobertura e acesso entre países. O panorama permite estudar lacunas na proteção coletiva.',
+    caution: 'Dados globais não são dados do Brasil. Identifique a vacina, a dose, o público, o território e o ano antes de citar percentuais.',
+    url: 'https://www.who.int/en/news-room/fact-sheets/detail/immunization-coverage'
+  },
+  {
+    id: 'oms-determinantes',
+    title: 'Social determinants of health — Determinantes sociais da saúde',
+    institution: 'Organização Mundial da Saúde (OMS)',
+    publisher: 'oms', date: '06/05/2025', language: 'Inglês',
+    kind: 'Síntese técnica e conceito', purposes: ['entender', 'evidencias', 'argumentar'],
+    summary: 'Condições de moradia, educação, trabalho e distribuição de recursos influenciam a saúde. A OMS usa essa perspectiva para discutir desigualdades e políticas além do atendimento médico.',
+    caution: 'O conceito ajuda a analisar causas sociais. Ele não prova, sozinho, uma causa específica no caso escolhido para a redação.',
+    url: 'https://www.who.int/news-room/fact-sheets/detail/social-determinants-of-health'
+  },
+  {
+    id: 'ms-saude-mental',
+    title: 'Saúde Mental — cuidado e Rede de Atenção Psicossocial',
+    institution: 'Ministério da Saúde',
+    publisher: 'ms', date: 'Página sem data de publicação indicada', language: 'Português',
+    kind: 'Política pública e orientação institucional', purposes: ['entender', 'argumentar'],
+    summary: 'O Ministério da Saúde apresenta a Rede de Atenção Psicossocial, o cuidado integral e a influência do contexto social e do estigma no acesso à atenção em saúde mental.',
+    caution: 'É uma apresentação da política de cuidado, não um estudo que mede efeitos do uso de telas.',
+    url: 'https://www.gov.br/saude/pt-br/assuntos/saude-de-a-a-z/s/saude-mental'
   }
 ];
+
+const SOURCE_BY_ID = new Map(SOURCE_LIBRARY.map((source) => [source.id, source]));
+const THEME_GENERATION_AXES = [
+  { label: 'Saúde pública, ética e práticas farmacêuticas', sourceIds: ['cff-internet', 'cff-datafolha', 'anvisa-uso-racional', 'oms-resistencia', 'oms-determinantes', 'constituicao-saude'] },
+  { label: 'Saúde mental, tecnologia e sociedade', sourceIds: ['oms-adolescentes', 'oms-hbsc', 'ms-saude-mental', 'oms-determinantes', 'ms-acolhimento'] },
+  { label: 'Meio ambiente, medicamentos e Saúde Única', sourceIds: ['oms-saude-unica', 'sinir-medicamentos', 'cff-datafolha', 'oms-resistencia', 'constituicao-saude'] },
+  { label: 'Acesso à saúde, equidade e humanização', sourceIds: ['oms-determinantes', 'ibge-pns', 'ms-acolhimento', 'constituicao-saude', 'oms-envelhecimento'] },
+  { label: 'Ciência, desinformação e responsabilidade social', sourceIds: ['cff-internet', 'cff-datafolha', 'ms-ciencia', 'oms-vacinacao', 'oms-hbsc', 'anvisa-uso-racional'] },
+  { label: 'Envelhecimento, cuidado e políticas públicas', sourceIds: ['oms-envelhecimento', 'ibge-pns', 'oms-determinantes', 'ms-acolhimento', 'constituicao-saude', 'ms-saude-mental'] },
+  { label: 'Vacinação, saúde coletiva e confiança social', sourceIds: ['oms-vacinacao', 'ms-ciencia', 'oms-determinantes', 'constituicao-saude', 'ms-acolhimento'] }
+];
+
+// Guias dos temas iniciais; os temas novos recebem seus próprios guias na resposta da IA.
+const INITIAL_THEME_SOURCE_GUIDES = {
+  'tema-1': [
+    { sourceId: 'cff-internet', purpose: 'entender', connection: 'Apresenta o conflito entre popularidade nas redes e orientação qualificada sobre medicamentos.', howToUse: 'Identifique o problema da autoridade de quem divulga orientações de saúde.', readingQuestion: 'Por que uma recomendação popular pode parecer segura mesmo sem avaliação profissional?' },
+    { sourceId: 'cff-datafolha', purpose: 'evidencias', connection: 'Oferece uma pesquisa sobre automedicação e fontes de orientação usadas pelos entrevistados.', howToUse: 'Se usar um percentual, informe que ele vem de 2019 e de pessoas que haviam utilizado medicamentos.', readingQuestion: 'Quem participou da pesquisa e o que ela permite afirmar sobre automedicação?' },
+    { sourceId: 'anvisa-uso-racional', purpose: 'argumentar', connection: 'Ajuda a relacionar educação em saúde e responsabilidade no uso de medicamentos.', howToUse: 'Explique com suas palavras o papel da orientação e da prevenção de problemas.', readingQuestion: 'Como a educação em saúde pode ajudar a transformar informação em decisões responsáveis?' }
+  ],
+  'tema-2': [
+    { sourceId: 'oms-saude-unica', purpose: 'entender', connection: 'Oferece a ideia de integração entre ambiente e saúde necessária para analisar os resíduos farmacêuticos.', howToUse: 'Explique a relação entre proteção ambiental e proteção da saúde.', readingQuestion: 'Por que o descarte de um medicamento pode interessar a diferentes áreas da saúde?' },
+    { sourceId: 'cff-datafolha', purpose: 'evidencias', connection: 'A pesquisa investigou também as formas de descarte relatadas pelos participantes.', howToUse: 'Procure a seção sobre descarte e mantenha o ano e o público da pesquisa ao citar um resultado.', readingQuestion: 'O que os hábitos de descarte relatados sugerem investigar sobre informação e acesso à coleta?' },
+    { sourceId: 'sinir-medicamentos', purpose: 'argumentar', connection: 'Apresenta responsabilidades de consumidores e empresas na destinação de medicamentos.', howToUse: 'Compare o funcionamento da logística reversa com os desafios de informação e participação da população.', readingQuestion: 'Como as responsabilidades se distribuem entre consumidores, comerciantes, distribuidores e fabricantes?' }
+  ],
+  'tema-3': [
+    { sourceId: 'oms-adolescentes', purpose: 'entender', connection: 'Situa a influência da mídia em um conjunto de fatores que afetam a saúde mental dos jovens.', howToUse: 'Construa uma análise que considere também escola, família e condições sociais.', readingQuestion: 'Que fatores, além do tempo de tela, precisam entrar na discussão?' },
+    { sourceId: 'oms-hbsc', purpose: 'evidencias', connection: 'Investiga o uso de redes sociais e jogos em adolescentes de diferentes países e regiões.', howToUse: 'Use a pesquisa como referência internacional e diferencie associação de causa.', readingQuestion: 'Quem foi pesquisado e por que esses resultados não podem ser apresentados como dados brasileiros?' },
+    { sourceId: 'ms-saude-mental', purpose: 'argumentar', connection: 'Permite discutir cuidado coletivo, acolhimento e acesso ao apoio em saúde mental.', howToUse: 'Relacione a discussão sobre hábitos digitais à importância de redes de cuidado.', readingQuestion: 'Como evitar que a responsabilidade pela saúde mental recaia somente sobre o indivíduo?' }
+  ],
+  'tema-4': [
+    { sourceId: 'oms-determinantes', purpose: 'entender', connection: 'Ajuda a explicar por que condições sociais distintas produzem barreiras diferentes ao cuidado.', howToUse: 'Escolha uma condição social e explique como ela pode dificultar o acesso.', readingQuestion: 'Que obstáculos existem antes mesmo de uma pessoa chegar ao serviço de saúde?' },
+    { sourceId: 'ibge-pns', purpose: 'evidencias', connection: 'Oferece dados brasileiros sobre acesso e utilização dos serviços de saúde.', howToUse: 'Procure um indicador pertinente e preserve seu ano e grupo populacional.', readingQuestion: 'Qual indicador ajuda a discutir a desigualdade mencionada na situação-problema?' },
+    { sourceId: 'constituicao-saude', purpose: 'argumentar', connection: 'Fornece a referência jurídica para discutir o direito de acesso universal e igualitário.', howToUse: 'Compare a garantia constitucional com uma barreira concreta discutida no tema.', readingQuestion: 'O que precisa acontecer para que um direito previsto em lei se realize no atendimento?' }
+  ]
+};
+
+function validateStudySources(items, allowedIds) {
+  const fail = () => { throw new Error('A IA não entregou as três leituras com fontes válidas. O tema e as fontes anteriores foram mantidos. Tente gerar novamente.'); };
+  if (!Array.isArray(items) || items.length !== 3) return fail();
+  const allowed = new Set(allowedIds);
+  const seenSources = new Set();
+  const seenPurposes = new Set();
+  const validated = items.map((item) => {
+    if (!item || typeof item !== 'object') return fail();
+    const source = SOURCE_BY_ID.get(item.sourceId);
+    if (!source || !allowed.has(source.id) || seenSources.has(source.id) ||
+        !Object.prototype.hasOwnProperty.call(SOURCE_PURPOSES, item.purpose) ||
+        !source.purposes.includes(item.purpose) || seenPurposes.has(item.purpose)) return fail();
+    const values = ['connection', 'howToUse', 'readingQuestion'].map((field) => {
+      if (typeof item[field] !== 'string' || item[field].trim().length < 15 ||
+          item[field].length > 700 || /https?:\/\/|www\./i.test(item[field])) return fail();
+      return item[field].trim();
+    });
+    seenSources.add(source.id);
+    seenPurposes.add(item.purpose);
+    // Nunca incorporar metadados ou URLs devolvidos pelo modelo.
+    return { sourceId: source.id, purpose: item.purpose, connection: values[0], howToUse: values[1], readingQuestion: values[2] };
+  });
+  if (new Set(validated.map((item) => SOURCE_BY_ID.get(item.sourceId).publisher)).size < 2) return fail();
+  const order = Object.keys(SOURCE_PURPOSES);
+  return validated.sort((a, b) => order.indexOf(a.purpose) - order.indexOf(b.purpose));
+}
+
+function getThemeStudySources(theme) {
+  const guides = theme.studySources || INITIAL_THEME_SOURCE_GUIDES[theme.id] || [];
+  return guides.flatMap((guide) => {
+    const source = SOURCE_BY_ID.get(guide.sourceId);
+    return source ? [{ ...guide, source }] : [];
+  });
+}
 
 const EMPTY_WRITING_PLAN = {
   problem: '',
@@ -382,6 +587,7 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
   const [isCheckingPractice, setIsCheckingPractice] = useState(false);
 
   const adaptiveFocus = useMemo(() => getAdaptiveFocus(essayHistory), [essayHistory]);
+  const studySources = useMemo(() => getThemeStudySources(selectedTheme), [selectedTheme]);
 
   useEffect(() => {
     try {
@@ -495,7 +701,7 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
               <Clock className="h-4 w-4" /> Começar simulado de 60 min
             </button>
             <button
-              id="gerar-situacao-problema"
+              id="gerar-situacao-professor"
               type="button"
               onClick={onGenerateNewSituationProblem}
               disabled={isGeneratingTheme}
@@ -503,11 +709,11 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
               className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-sm font-extrabold text-emerald-950 shadow-sm transition hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:cursor-wait disabled:opacity-60"
             >
               <Sparkles aria-hidden="true" className={`h-5 w-5 shrink-0 ${isGeneratingTheme ? 'animate-pulse' : ''}`} />
-              <span>{isGeneratingTheme ? 'Gerando situação-problema...' : 'Gerar situação-problema inédita com IA'}</span>
+              <span>{isGeneratingTheme ? 'Preparando tema e fontes...' : 'Gerar situação-problema inédita com IA'}</span>
             </button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-emerald-100/90">A IA cria uma proposta nova e troca o tema usado no planejamento. Ela tenta evitar os temas já vistos.</p>
+        <p className="mt-3 text-xs text-emerald-100/90">A IA cria uma proposta nova e prepara três leituras com fontes para a etapa 3. O tema e as leituras são atualizados juntos.</p>
         {themeGenerationError && <p role="alert" className="mt-3 rounded-xl border border-rose-300/50 bg-rose-950/40 p-3 text-sm text-rose-100">{themeGenerationError}</p>}
         <p className="mt-4 text-xs text-emerald-100/90">O planejamento fica salvo neste navegador. Só é enviado à IA quando você pede uma pista ou feedback.</p>
       </section>
@@ -629,22 +835,39 @@ function ProfessorVirtual({ selectedTheme, essayHistory, onStartMockExam, onGene
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+          <section id="etapa-3-fontes" aria-labelledby="titulo-repertorio" aria-busy={isGeneratingTheme} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
             <div>
               <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Etapa 3 • Repertório com fonte</span>
-              <h3 className="mt-1 text-lg font-extrabold text-slate-900">Leia antes de usar um dado</h3>
-              <p className="mt-1 text-sm text-slate-600">Use as fontes para entender uma ideia e depois explique-a com suas palavras. Os links abrem os materiais originais.</p>
+              <h3 id="titulo-repertorio" className="mt-1 text-lg font-extrabold text-slate-900">Entenda, investigue e construa seu argumento</h3>
+              <p className="mt-2 text-sm font-semibold text-emerald-900">Leituras para: {selectedTheme.title}</p>
+              <p className="mt-2 text-sm text-slate-600">Leia o material original e explique a ideia com suas palavras. Confira o ano e o público da pesquisa antes de usar um dado.</p>
+              <p className="mt-2 text-xs text-slate-500">Links e resumos de um catálogo conferido em {SOURCE_CATALOG_CHECKED_AT}. {selectedTheme.studySources ? 'A IA selecionou os materiais e preparou as orientações para este tema.' : 'Seleção preparada para este tema de treino.'} A seleção não é uma pesquisa na internet em tempo real.</p>
             </div>
+            {isGeneratingTheme && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">Preparando a nova proposta e suas leituras. A seleção abaixo ainda pertence ao tema atual.</p>}
             <div className="space-y-3">
-              {SOURCE_LIBRARY.map((source) => (
-                <article key={source.url} className="rounded-xl border border-slate-200 p-3.5">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">{source.institution} • {source.year}</div>
-                  <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-start gap-1 text-sm font-bold text-slate-900 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-800">
-                    {source.title}<ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              {studySources.map(({ source, purpose, connection, howToUse, readingQuestion }) => (
+                <article key={source.id} data-source-id={source.id} className="min-w-0 rounded-xl border border-slate-200 p-4 space-y-3">
+                  <div>
+                    <div className="text-xs font-extrabold text-emerald-800">{SOURCE_PURPOSES[purpose]}</div>
+                    <h4 className="mt-2 text-sm font-bold text-slate-900">{source.title}</h4>
+                    <p className="mt-1 text-xs font-semibold text-slate-600">{source.institution}</p>
+                    <p className="mt-1 text-xs text-slate-500">{source.kind} • {source.language}</p>
+                    <p className="mt-1 text-xs text-slate-500">Publicação ou período: {source.date}</p>
+                  </div>
+                  <p className="text-sm text-slate-700"><strong>O que você encontra:</strong> {source.summary}</p>
+                  <div className="space-y-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-950">
+                    <p><strong>Relação com a situação-problema:</strong> {connection}</p>
+                    <p><strong>Como usar no seu raciocínio:</strong> {howToUse}</p>
+                    <p><strong>Pergunta para guiar a leitura:</strong> {readingQuestion}</p>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-600"><strong>Cuidado ao citar:</strong> {source.caution}</p>
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-emerald-200 bg-white p-3 text-emerald-900 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700">
+                    <span className="inline-flex items-center gap-2 text-sm font-bold">Ler fonte original<ArrowRight className="h-4 w-4 shrink-0" /></span>
+                    <span className="mt-1 block break-all text-[11px] underline underline-offset-2">{source.url}</span>
                   </a>
-                  <p className="mt-1 text-xs text-slate-600">Pode ajudar em: {source.theme}.</p>
                 </article>
               ))}
+              {studySources.length === 0 && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Este tema ainda não tem leituras vinculadas. Use “Gerar situação-problema inédita com IA” para criar uma proposta com fontes.</p>}
             </div>
           </section>
         </div>
@@ -940,18 +1163,18 @@ export default function App() {
       return;
     }
 
-    const variedAxes = [
-      'Saúde pública, ética e práticas farmacêuticas',
-      'Saúde mental, tecnologia e sociedade',
-      'Meio ambiente, medicamentos e Saúde Única',
-      'Acesso à saúde, equidade e humanização',
-      'Ciência, desinformação e responsabilidade social',
-      'Envelhecimento, cuidado e políticas públicas',
-      'Vacinação, saúde coletiva e confiança social'
-    ];
-    const generationAxis = randomizeAxis
-      ? variedAxes[Math.floor(Math.random() * variedAxes.length)]
-      : customThemeAxis;
+    const axisConfig = randomizeAxis
+      ? THEME_GENERATION_AXES[Math.floor(Math.random() * THEME_GENERATION_AXES.length)]
+      : { label: customThemeAxis, sourceIds: SOURCE_LIBRARY.map((source) => source.id) };
+    const generationAxis = axisConfig.label;
+    const sourceCatalogForPrompt = axisConfig.sourceIds.map((id) => {
+      const source = SOURCE_BY_ID.get(id);
+      return {
+        id: source.id, title: source.title, institution: source.institution,
+        publisher: source.publisher, date: source.date, kind: source.kind,
+        allowedPurposes: source.purposes, verifiedSummary: source.summary, limitation: source.caution
+      };
+    });
     const recentThemeTitles = themes
       .slice(0, 8)
       .map((theme) => `- ${theme.title}`)
@@ -960,14 +1183,28 @@ export default function App() {
     setThemeGenerationError('');
     setIsGeneratingTheme(true);
     try {
-      const prompt = `Você é elaborador oficial da banca de Redação Agendada do Centro Universitário São Camilo (Edital nº 084/2026) para o curso de Farmácia.
-Crie uma proposta de redação INÉDITA, atual e rigorosamente no padrão São Camilo sobre o eixo: "${generationAxis}".
+      const prompt = `Você é uma professora de redação que prepara exercícios de treino para uma estudante interessada na São Camilo. Não alegue representar a instituição ou uma banca oficial.
+Crie uma proposta de redação INÉDITA sobre o eixo: "${generationAxis}", com um roteiro de leitura fundamentado EXCLUSIVAMENTE no catálogo abaixo.
 Não repita os títulos nem o recorte das propostas recentes abaixo; escolha um problema social ou de saúde diferente dentro do eixo indicado:
 ${recentThemeTitles || '- Nenhum tema anterior'}
 A proposta deve conter:
-1. Um título claro do tema.
-2. Um Texto-Base contextualizado (entre 110 e 150 palavras) trazendo dados ou conceitos reais e atuais.
-3. Um comando de Situação-Problema claro pedindo um texto dissertativo-argumentativo entre 250 e 450 palavras.`;
+1. category e um title claro.
+2. baseText contextualizado, entre 110 e 150 palavras. Use apenas fatos e conceitos dos resumos fornecidos. Pode descrever uma situação hipotética, identificada como tal. Não invente estatísticas, pesquisas, citações ou notícias. Preserve ano, território e público de qualquer dado. Não apresente uma pesquisa antiga como atual.
+3. problemSituation: um comando claro para produzir um texto dissertativo-argumentativo entre 250 e 450 palavras, sem dar a resposta pronta.
+4. studySources: EXATAMENTE três leituras diferentes, pertinentes ao recorte específico que você criou. Defina o recorte de forma que haja suporte em três materiais do catálogo. Use pelo menos dois publishers diferentes.
+Cada leitura contém somente sourceId, purpose, connection, howToUse e readingQuestion.
+- Use um sourceId existente no catálogo; não crie links, títulos, autores ou metadados. A aplicação acrescentará o link original e o resumo conferido.
+- Distribua as três finalidades sem repetir: entender, evidencias, argumentar. Respeite allowedPurposes de cada material.
+- entender: uma leitura para compreender as causas, o contexto ou um conceito central.
+- evidencias: uma pesquisa, um relatório ou uma síntese técnica relevante. Não chame orientação institucional de pesquisa. Não trate associação como prova de causalidade.
+- argumentar: um conceito, direito ou política que ajude a construir um raciocínio autoral sobre o tema.
+- connection: explique a ligação específica com a situação-problema, em uma ou duas frases.
+- howToUse: oriente o que observar ou comparar, sem redigir tese ou parágrafo pronto.
+- readingQuestion: uma pergunta concreta para guiar a leitura.
+- As orientações devem se apoiar apenas no verifiedSummary e respeitar limitation. Não acrescente fatos novos, números, citações literais ou URLs às orientações. Escreva cada campo com 15 a 700 caracteres.
+- Não force uma referência só por ser conhecida. Não afirme ter pesquisado a internet ou lido o texto integral.
+CATÁLOGO CONFERIDO:
+${JSON.stringify(sourceCatalogForPrompt)}`;
 
       const payload = {
         contents: [{ parts: [{ text: prompt }] }],
@@ -979,9 +1216,23 @@ A proposta deve conter:
               category: { type: 'STRING' },
               title: { type: 'STRING' },
               baseText: { type: 'STRING' },
-              problemSituation: { type: 'STRING' }
+              problemSituation: { type: 'STRING' },
+              studySources: {
+                type: 'ARRAY',
+                items: {
+                  type: 'OBJECT',
+                  properties: {
+                    sourceId: { type: 'STRING' },
+                    purpose: { type: 'STRING' },
+                    connection: { type: 'STRING' },
+                    howToUse: { type: 'STRING' },
+                    readingQuestion: { type: 'STRING' }
+                  },
+                  required: ['sourceId', 'purpose', 'connection', 'howToUse', 'readingQuestion']
+                }
+              }
             },
-            required: ['category', 'title', 'baseText', 'problemSituation']
+            required: ['category', 'title', 'baseText', 'problemSituation', 'studySources']
           }
         }
       };
@@ -994,6 +1245,7 @@ A proposta deve conter:
       )) {
         throw new Error('A IA retornou uma proposta incompleta. O tema anterior foi mantido. Tente gerar novamente.');
       }
+      const studySources = validateStudySources(parsed.studySources, axisConfig.sourceIds);
 
       const newTheme = {
         id: `tema-ia-${Date.now()}`,
@@ -1001,7 +1253,8 @@ A proposta deve conter:
         category: typeof parsed.category === 'string' && parsed.category.trim() ? parsed.category.trim() : generationAxis,
         title: parsed.title.trim(),
         baseText: parsed.baseText.trim(),
-        problemSituation: parsed.problemSituation.trim()
+        problemSituation: parsed.problemSituation.trim(),
+        studySources
       };
 
       setThemes((prev) => [newTheme, ...prev]);
@@ -1315,7 +1568,7 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs border border-emerald-200 transition shrink-0"
                     >
                       <RefreshCw className={`w-4 h-4 text-emerald-700 ${isGeneratingTheme ? 'animate-spin' : ''}`} />
-                      {isGeneratingTheme ? 'Criando Proposta...' : '+ Gerar Tema Inédito IA'}
+                      {isGeneratingTheme ? 'Preparando tema e fontes...' : '+ Gerar Tema Inédito IA'}
                     </button>
                   </div>
                   {themeGenerationError && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">{themeGenerationError}</p>}
