@@ -1609,10 +1609,10 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                 </div>
 
                 {/* Cronômetro Oficial de 60 Minutos */}
-               <div className="cp-timer flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl border border-slate-800 w-full sm:w-fit self-start sm:self-end">
-                  <Clock className={`w-6 h-6 ${timerRunning ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}`} />
+               <div className="cp-timer flex flex-wrap items-center justify-between gap-3  bg-rose-100 text-rose-800 px-4 py-3 rounded-2xl border boborder-rose-300 w-full sm:w-fit self-start sm:self-end">
+                  <Clock className={`w-6 h-6 ${timerRunning ? 'text-rose-800 animate-pulse' : 'text-rose-400'}`} />
                   <div>
-                    <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                    <div className="text-[11px] uppercase tracking-wider text-rose-800 font-semibold">
                       {isMockExam ? (timerRunning ? 'Simulado em andamento' : 'Tempo encerrado') : 'Tempo Oficial (60 min)'}
                     </div>
                     <div className="text-2xl font-mono font-extrabold tracking-wider text-white">
@@ -1624,8 +1624,8 @@ Depreende-se, portanto, que superar os desafios ligados a [retome o tema central
                       onClick={() => setTimerRunning((prev) => !prev)}
                       className={`p-2.5 rounded-xl font-bold text-xs flex items-center gap-1 transition ${
                         timerRunning
-                          ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-                          : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950'
+                          ? 'bg-rose-500 hover:bg-rose-600 text-white-950'
+                          : 'bg-lime-500 hover:bg-lime-600 text-white-950'
                       }`}
                       title={timerRunning ? 'Pausar Cronômetro' : 'Iniciar Cronômetro de 60 min'}
                     >
